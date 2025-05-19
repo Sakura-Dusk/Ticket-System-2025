@@ -9,6 +9,18 @@ include_directories(src)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Ofast")
 
 add_executable(code
+        /FileStore/read.hpp
+        /FileStore/Chars.hpp
+        /FileStore/vector.hpp
+
+        /FileStore/Hash.hpp
+        /FileStore/Cache.hpp
+
+        /FileStore/MemoryRiver.hpp
+        /FileStore/MemoryRiver_With_Cache.hpp
+
+        /FileStore/FileStore-B+.hpp
+
         /FileStore/main.cpp
 )
 
