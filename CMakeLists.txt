@@ -9,19 +9,19 @@ include_directories(src)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Ofast")
 
 add_executable(code
-        /src/read.hpp
-        /src/Chars.hpp
-        /src/vector.hpp
+        src/read.hpp
+        src/Chars.hpp
+        src/vector.hpp
 
-        /src/Hash.hpp
-        /src/Cache.hpp
+        src/Hash.hpp
+        src/Cache.hpp
 
-        /src/MemoryRiver.hpp
-        /src/MemoryRiver_With_Cache.hpp
+        src/MemoryRiver.hpp
+        src/MemoryRiver_With_Cache.hpp
 
-        /src/FileStore-B+.hpp
+        src/FileStore-B+.hpp
 
-        /src/main.cpp
+        src/main.cpp
 )
 
 # 调试时可以打开，用来测指针的问题
