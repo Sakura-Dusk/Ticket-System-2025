@@ -21,7 +21,7 @@ add_executable(code
 
         /src/FileStore-B+.hpp
 
-        /main.cpp
+        /src/main.cpp
 )
 
 # 调试时可以打开，用来测指针的问题
