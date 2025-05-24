@@ -106,6 +106,13 @@ public:
     void Delete(int index) {
         /* your code here */
     }
+
+    void clear_all() {
+        file.close();
+        file.open(file_name, std::ios::out);
+        file.close();
+        file.open(file_name, std::ios::in | std::ios::out | std::ios::binary);
+    }
 };
 
 

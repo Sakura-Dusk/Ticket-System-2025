@@ -40,6 +40,13 @@ class MEMORYRIVER_WITH_CACHE {
             // std::cerr << "~MEMORYRIVER_WITH_CACHE done\n";
         }
 
+        void clear_all() {
+            while (cache.size()) {
+                pop_last();
+            }
+            memory_river.clear_all();
+        }
+
         void initialise(string FN = "") {
             memory_river.initialise(FN);
         }

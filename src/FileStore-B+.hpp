@@ -100,6 +100,8 @@ class FileStore {
     };
 
     private:
+		friend class USER;
+
         MEMORYRIVER_WITH_CACHE<BPlusNode, 2> node_storage; // Stores root position and next_pos
         int root_pos;
 		int node_chain[MAX_DEG];
@@ -114,9 +116,13 @@ class FileStore {
 
         void Init(string s) {
             // std::cerr << s << std::endl << s + "_head" << std::endl;
-            if (!std::filesystem::exists(s + "qwq")) node_storage.initialise(s + "qwq"), root_pos = -1;
-                else node_storage.initialise(s + "qwq"), node_storage.get_info(root_pos, 1);
+            if (!std::filesystem::exists(s)) node_storage.initialise(s), root_pos = -1;
+                else node_storage.initialise(s), node_storage.get_info(root_pos, 1);
         	// std::cerr << "read root_pos = " << root_pos << std::endl;
+        }
+
+		void clear_all() {
+	        node_storage.clear_all();
         }
 
         ~FileStore() {

@@ -20,6 +20,7 @@ add_executable(code
         src/MemoryRiver_With_Cache.hpp
 
         src/FileStore-B+.hpp
+        src/User.hpp
 
         src/main.cpp
 )

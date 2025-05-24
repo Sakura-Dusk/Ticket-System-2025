@@ -1,57 +1,99 @@
 #include<fstream>
 #include<iostream>
 #include<string>
-#include "FileStore-B+.hpp"
+// #include "FileStore-B+.hpp"
+#include "User.hpp"
 
-// int main() {
-//     std::ofstream inp;
-//     inp.open("read.txt", std::ios::out);
-//     if (!inp.is_open()) {
-//         std::ofstream inp;
-//         inp.open("read.txt", std::ios::out);
-//     }
-//     int n;
-//     std::cin >> n;
-//     inp << n;
-//     std::string line;
-//     while (getline(std::cin, line)) {
-//         inp << line << std::endl;
-//     }
-//     inp.close();
-// }
+void Init() {
+    User_Init();
+}
 
- int main() {
-     int n; std::cin >> n;
-     FileStore <chars, int> T;
-     T.Init("FileStore");
+void once_clean() {
+    User_once_clean();
+}
 
-     // std::cerr << sizeof(T.qweqw);
+void ALL_CLEAN() {
+    User_ALL_CLEAN();
+}
 
-     chars index;
-     for (int i = 1; i <= n; i++) {
-         // std::cerr << "i = " <<i <<std::endl;
-         std::string op; std::cin >> op;
-         // std::cerr << op << std::endl;
-         if (op == "insert") {
-             int value; std::cin >> index.a >> value;
-             T.data_insert(index, value);
-             continue;
-         }
-         if (op == "delete") {
-             int value; std::cin >> index.a >> value;
-             T.data_delete(index, value);
-             continue;
-         }
-         if (op == "find") {
-             std::cin >> index.a;
-             vector <int> ans = T.data_find(index);
-             if (!ans.size()) std::cout << "null";
-                 else {
-                     for (int j = 0; j < ans.size(); j++) std::cout << ans[j] << " ";
-                 }
-             std::cout << std::endl;
-         }
-     }
-    // std::cerr << "about ~ part start.\n";
-     return 0;
- }
+int main() {
+    freopen("write.txt", "w", stdout);
+    Init();
+
+    while (1) {
+        string operator_id;
+        std::cin >> operator_id;
+
+        string operator_type;
+        std::cin >> operator_type;
+
+        std::cout << operator_id << " ";
+
+        if (operator_type == "add_user") {
+            std::cout << add_user() << "\n";
+            continue;
+        }
+        if (operator_type == "login") {
+            std::cout << login() << "\n";
+            continue;
+        }
+        if (operator_type == "logout") {
+            std::cout << logout() << "\n";
+            continue;
+        }
+        if (operator_type == "query_profile") {
+            query_profile();
+            continue;
+        }
+        if (operator_type == "modify_profile") {
+            modify_profile();
+            continue;
+        }
+
+        if (operator_type == "clean") {
+            ALL_CLEAN();
+            std::cout << "0\n";
+            continue;
+        }
+        if (operator_type == "exit") {
+            std::cout << "bye\n";
+            break;
+        }
+    }
+}
+
+ // int main() {
+ //     int n; std::cin >> n;
+ //     FileStore <chars, int> T;
+ //     T.Init("FileStore");
+ //
+ //     // std::cerr << sizeof(T.qweqw);
+ //
+ //     chars index;
+ //     for (int i = 1; i <= n; i++) {
+ //         // std::cerr << "i = " <<i <<std::endl;
+ //         std::string op; std::cin >> op;
+ //         // std::cerr << op << std::endl;
+ //         if (op == "insert") {
+ //             int value; std::cin >> index.a >> value;
+ //             T.data_insert(index, value);
+ //             continue;
+ //         }
+ //         if (op == "delete") {
+ //             int value; std::cin >> index.a >> value;
+ //             T.data_delete(index, value);
+ //             continue;
+ //         }
+ //         if (op == "find") {
+ //             std::cin >> index.a;
+ //             vector <int> ans = T.data_find(index);
+ //             if (!ans.size()) std::cout << "null";
+ //                 else {
+ //                     for (int j = 0; j < ans.size(); j++) std::cout << ans[j] << " ";
+ //                 }
+ //             std::cout << std::endl;
+ //         }
+ //     }
+ //    // std::cerr << "about ~ part start.\n";
+ //     return 0;
+ // }
