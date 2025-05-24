@@ -9,7 +9,7 @@
 #include "vector.hpp"
 #include "Chars.hpp"
 
-class User {
+class User {//store data about User
 public:
     chars username, password, name, mailAddr;
     int privilege;
