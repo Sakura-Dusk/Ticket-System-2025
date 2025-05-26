@@ -3,9 +3,11 @@
 #include<string>
 // #include "FileStore-B+.hpp"
 #include "User.hpp"
+#include "Train.hpp"
 
 void Init() {
     User_Init();
+    Train_Init();
 }
 
 void once_clean() {
@@ -14,10 +16,11 @@ void once_clean() {
 
 void ALL_CLEAN() {
     User_ALL_CLEAN();
+    Train_ALL_CLEAN();
 }
 
 int main() {
-    freopen("write.txt", "w", stdout);
+    // freopen("write.txt", "w", stdout);
     Init();
 
     while (1) {
@@ -47,6 +50,32 @@ int main() {
         }
         if (operator_type == "modify_profile") {
             modify_profile();
+            continue;
+        }
+
+        if (operator_type == "add_train") {
+            std::cout << add_train() << "\n";
+            continue;
+        }
+        if (operator_type == "delete_train") {
+            std::cout << delete_train() << "\n";
+            continue;
+        }
+        if (operator_type == "release_train") {
+            std::cout << release_train() << "\n";
+            continue;
+        }
+        if (operator_type == "query_train") {
+            query_train();
+            continue;
+        }
+
+        if (operator_type == "query_ticket") {
+            query_ticket();
+            continue;
+        }
+        if (operator_type == "query_transfer") {
+            query_transfer();
             continue;
         }
 

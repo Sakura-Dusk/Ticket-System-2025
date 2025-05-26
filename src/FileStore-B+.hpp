@@ -10,7 +10,7 @@
 #include "MemoryRiver_With_Cache.hpp"
 
 
-const int BLOCK_SIZE = 55;
+const int BLOCK_SIZE = 16;
 const int MAX_DEG = 1005;
 
 template<typename indextype, typename valuetype>

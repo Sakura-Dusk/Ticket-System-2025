@@ -12,6 +12,7 @@ add_executable(code
         src/read.hpp
         src/Chars.hpp
         src/vector.hpp
+        src/Sort.hpp
 
         src/Hash.hpp
         src/Cache.hpp
@@ -21,6 +22,7 @@ add_executable(code
 
         src/FileStore-B+.hpp
         src/User.hpp
+        src/Train.hpp
 
         src/main.cpp
 )
