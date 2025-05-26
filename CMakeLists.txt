@@ -23,6 +23,7 @@ add_executable(code
         src/FileStore-B+.hpp
         src/User.hpp
         src/Train.hpp
+        src/Ticket.hpp
 
         src/main.cpp
 )

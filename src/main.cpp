@@ -4,10 +4,12 @@
 // #include "FileStore-B+.hpp"
 #include "User.hpp"
 #include "Train.hpp"
+#include "Ticket.hpp"
 
 void Init() {
     User_Init();
     Train_Init();
+    Ticket_Init();
 }
 
 void once_clean() {
@@ -17,6 +19,18 @@ void once_clean() {
 void ALL_CLEAN() {
     User_ALL_CLEAN();
     Train_ALL_CLEAN();
+    Ticket_ALL_CLEAN();
+}
+
+int get_operator_time(string &operator_id) {
+    int len = operator_id.length();
+    int res = 0, i = 0;
+    while (i < len && (operator_id[i] < '0' || operator_id[i] > '9')) i++;
+    while (i < len && operator_id[i] >= '0' && operator_id[i] <= '9') {
+        res = res * 10 + operator_id[i] - '0';
+        i++;
+    }
+    return res;
 }
 
 int main() {
@@ -76,6 +90,11 @@ int main() {
         }
         if (operator_type == "query_transfer") {
             query_transfer();
+            continue;
+        }
+
+        if (operator_type == "buy_ticket") {
+            buy_ticket(get_operator_time(operator_id));
             continue;
         }
 

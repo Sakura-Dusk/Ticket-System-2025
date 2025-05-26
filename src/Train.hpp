@@ -218,6 +218,8 @@ int add_train() {
         if (read_op == Chars("-y")) std::cin >> type;
     }
 
+    // std::cerr << "add_train read done\n";
+
     if (Train_List.data_find_bool(trainID)) return -1;//trainID already exist
     Train now_train(trainID, stationNum, stations, seatNum, prices, startTime, travelTimes, stopoverTimes, saleDate_start, saleDate_end, type);
     Train_List.data_insert(trainID, now_train);
@@ -378,6 +380,7 @@ void query_ticket() {
             }
             else {
                 pass_time += now_train.travelTimes[j];
+                if (j && j < now_train.stationNum - 1) pass_time += now_train.stopoverTimes[j];
             }
         Time first_time(now_train.saleDate_start, now_train.startTime); first_time += pass_time;
         Time last_time(now_train.saleDate_end, now_train.startTime); last_time += pass_time;
@@ -438,6 +441,7 @@ void query_ticket() {
             }
             else {
                 pass_time += now_train.travelTimes[j];
+                if (j && j < now_train.stationNum - 1) pass_time += now_train.stopoverTimes[j];
             }
         Time start_time(now_train.saleDate_start, now_train.startTime); start_time += pass_time;
         int day_id = get_days(start_time.x, Date);
@@ -499,6 +503,7 @@ void query_transfer() {
         int pass_time_ = 0;
         for (int i = 0; i < first_train.stationNum; i++)
             if (first_train.stations[i] == start_station) {
+                if (i && i < first_train.stationNum - 1) pass_time_ += first_train.stopoverTimes[i];
                 pos_1 = i; break;
             }
             else {
@@ -535,6 +540,7 @@ void query_transfer() {
                     }
                     else {
                         pass_time += now_train.travelTimes[j];
+                        if (j && j < now_train.stationNum - 1) pass_time += now_train.stopoverTimes[j];
                     }
 
                 Time first_time(now_train.saleDate_start, now_train.startTime); first_time += pass_time;
