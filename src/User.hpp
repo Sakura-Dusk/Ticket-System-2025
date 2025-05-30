@@ -19,17 +19,17 @@ public:
         privilege = 0;
         username = chars(); password = chars(); name = chars(); mailAddr = chars();
     }
-    User(const chars &username, const chars &password, const chars &name, const chars &mailAddr, const int privilege) : username(username), password(password), name(name), mailAddr(mailAddr), privilege(privilege) {}
+    User(const chars &username, const chars &password, const chars &name, const chars &mailAddr, const int &privilege) : username(username), password(password), name(name), mailAddr(mailAddr), privilege(privilege) {}
     [[nodiscard]] int Privilege() const {return privilege;}
     [[nodiscard]] chars Username() const {return username;}
     [[nodiscard]] chars Password() const {return password;}
     [[nodiscard]] chars Name() const {return name;}
     [[nodiscard]] chars MailAddr() const {return mailAddr;}
 
-    bool operator ==(const User other) const {
+    bool operator ==(const User& other) const {
         return username == other.username;
     }
-    bool operator <(const User other) const {
+    bool operator <(const User& other) const {
         return username < other.username;
     }
 };
