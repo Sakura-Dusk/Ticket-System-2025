@@ -162,9 +162,6 @@ inline void query_profile(int operator_time) {
         std::cout << "-1\n"; return ;
     }//can't find user
     const int privilege = res[0].Privilege();
-    // if (operator_time == 1703) {
-    //     std::cerr << "cur_privilege = " << cur_privilege << " , privilege = " << privilege << std::endl;
-    // }
     if (cur_privilege < privilege || (cur_privilege == privilege && cur_username != username)) {
         std::cout << "-1\n"; return ;
     }//cur_user privilege lower than user privilege
@@ -206,7 +203,7 @@ inline void modify_profile() {
         std::cout << "-1\n"; return ;
     }//can't find user
     int privilege = res[0].Privilege();
-    if (cur_privilege < privilege) {
+    if (cur_privilege < privilege || (cur_privilege == privilege && cur_username != username)) {
         // std::cout << "cur_user privilege lower than user privilege\n";
         std::cout << "-1\n"; return ;
     }//cur_user privilege lower than user privilege

@@ -34,8 +34,6 @@ int get_operator_time(const string &operator_ID) {
 }
 
 int main() {
-    // freopen("5.in", "r", stdin);
-    // freopen("write.txt", "w", stdout);
     Init();
 
     while (true) {

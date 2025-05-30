@@ -38,7 +38,8 @@ int get_all_days(year_Time x) {
 year_Time days_to_year_Time(int x) {
     if (x <= 30) return year_Time(6, x);
     if (x <= 30 + 31) return year_Time(7, x - 30);
-    return year_Time(8, x - 30 - 31);
+    if (x <= 30 + 31 + 31) return year_Time(8, x - 30 - 31);
+    return year_Time(9, x - 30 - 31 - 31);
 }
 int get_days(year_Time x, year_Time y) {
     return get_all_days(y) - get_all_days(x);
@@ -369,6 +370,7 @@ void query_ticket(int operator_time) {
     }
 
     // std::cerr << "done read part\n";
+    // return ;
 
     vector<std::tuple<Train, int, int> >ans;
     vector<chars>res = Place_to_Place_List.data_find(std::make_pair(start_station, end_station));
