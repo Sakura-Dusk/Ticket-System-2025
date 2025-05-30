@@ -90,7 +90,7 @@ public:
     int ticket_left[Maximum_Day_Size][stationNum_Maximum_Size];
 
 public:
-    bool is_release;
+    bool is_release, is_delete;
 
     Train(){}
     Train(chars trainID, int stationNum, chars* stations, int seatNum, int* prices, day_Time startTime, int* travelTimes, int* stopoverTimes, year_Time saleDate_start, year_Time saleDate_end, char type)
@@ -99,6 +99,7 @@ public:
         for (int i = 0; i < stationNum - 1; i++) this->prices[i] = prices[i];
         for (int i = 0; i < stationNum - 1; i++) this->travelTimes[i] = travelTimes[i];
         for (int i = 1; i < stationNum - 1; i++) this->stopoverTimes[i] = stopoverTimes[i];
+        is_delete = false;
     }
 
     bool operator ==(const Train other) const {
@@ -268,7 +269,13 @@ int add_train() {
 
     // std::cerr << "add_train read done\n";
 
-    if (Train_List.data_find_bool(trainID)) return -1;//trainID already exist
+    if (Train_List.data_find_bool(trainID)) {
+        Train now_train = Train_List.data_find(trainID)[0];
+        if (now_train.is_delete == false) return -1;//trainID already exist
+        now_train = Train(trainID, stationNum, stations, seatNum, prices, startTime, travelTimes, stopoverTimes, saleDate_start, saleDate_end, type);
+        Train_List.data_update(trainID, now_train);
+        return 0;
+    }
     Train now_train(trainID, stationNum, stations, seatNum, prices, startTime, travelTimes, stopoverTimes, saleDate_start, saleDate_end, type);
     Train_List.data_insert(trainID, now_train);
     // std::cerr << "Try build, stationNum = " << stationNum << std::endl;
@@ -287,7 +294,9 @@ int delete_train() {
     if (res.empty()) return -1;//train not found
     Train now_train = res[0];
     if (now_train.is_release) return -1;//train already released
-    Train_List.data_delete(trainID, now_train);
+    // Train_List.data_delete(trainID, now_train);
+    now_train.is_delete = true;
+    Train_List.data_update(trainID, now_train);
     return 0;
 }
 
@@ -302,7 +311,7 @@ int release_train() {
     if (res.empty()) return -1;//train not found
     Train now_train = res[0];
     if (now_train.is_release) return -1;//train already released
-    Train_List.data_delete(trainID, now_train);
+    // Train_List.data_delete(trainID, now_train);
     now_train.is_release = true;
 
     //part about query_ticket : Place_to_Place_List
@@ -319,7 +328,8 @@ int release_train() {
     for (int i = 0; i < now_train.stationNum; i++)
         Place_to_Train_List.data_insert(now_train.stations[i], trainID);
 
-    Train_List.data_insert(trainID, now_train);
+    // Train_List.data_insert(trainID, now_train);
+    Train_List.data_update(trainID, now_train);
     return 0;
 }
 
@@ -430,7 +440,7 @@ void query_ticket(int operator_time) {
         // std::cerr << "this time strategy : " << strategy << std::endl;
         if (strategy == 0) {
             // std::cerr << "qwq\n";
-            sort(id.begin(), id.end(), [&](int x, int y) {
+            SJTU::sort(id.begin(), id.end(), [&](int x, int y) {
                 // std::cerr << "sort about id: " << x << " " << y << std::endl;
                 int xtime = std::get<1>(ans[x]), ytime = std::get<1>(ans[y]);
                 // std::cerr << "xtime = " << xtime << ", ytime = " << ytime << std::endl;
@@ -439,7 +449,7 @@ void query_ticket(int operator_time) {
             });
         }
         else {
-            sort(id.begin(), id.end(), [&](int x, int y) {
+            SJTU::sort(id.begin(), id.end(), [&](int x, int y) {
                 // std::cerr << "sort about id: " << x << " " << y << std::endl;
                 int xcost = std::get<2>(ans[x]), ycost = std::get<2>(ans[y]);
                 // std::cerr << "xcost = " << xcost << ", ycost = " << ycost << std::endl;

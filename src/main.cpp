@@ -115,7 +115,7 @@ int main() {
         }
         if (operator_type == "refund_ticket") {
             // SKIP_HOLE_LINE(); continue;
-            std::cout << refund_ticket() << std::endl;
+            std::cout << refund_ticket(get_operator_time(operator_id)) << std::endl;
             continue;
         }
 

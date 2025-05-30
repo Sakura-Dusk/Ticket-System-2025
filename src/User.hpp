@@ -84,7 +84,7 @@ inline int add_user() {
 
     if (!exist_root) {
         privilege = 10;
-        const User root(username, password, name, mailAddr, privilege);
+        User root(username, password, name, mailAddr, privilege);
         User_List.data_insert(username, root);
         // std::cerr << "qwq\n";
         root_username = username; exist_root = true;
@@ -120,8 +120,8 @@ inline int login() {
     if (User_Login.data_find_bool(username) && User_Login.data_find(username)[0]) return -1;//already login
     const chars real_password = res[0].Password();
     if (real_password != password) return -1;//password wrong
-    User_Login.data_delete(username, false);
-    User_Login.data_insert(username, true);
+    if (!User_Login.data_find_bool(username)) User_Login.data_insert(username, true);
+        else User_Login.data_update(username, true);
     return 0;
 }
 
@@ -135,8 +135,10 @@ inline int logout() {
 
     vector<User>res = User_List.data_find(username); if (res.empty()) return -1;//can't find user
     if (!User_Login.data_find_bool(username) || !User_Login.data_find(username)[0]) return -1;//not login
-    User_Login.data_delete(username, true);
-    User_Login.data_insert(username, false);
+    if (!User_Login.data_find_bool(username)) User_Login.data_insert(username, false);
+        else User_Login.data_update(username, false);
+    // User_Login.data_delete(username, true);
+    // User_Login.data_insert(username, false);
     return 0;
 }
 
@@ -214,7 +216,8 @@ inline void modify_profile() {
     }//new_privilege >= cur_user privilege
 
     User now = res[0];
-    User_List.data_delete(username, now);
+
+    // User_List.data_delete(username, now);
     if (in[2]) {
         now.password = new_password;
     }
@@ -227,7 +230,8 @@ inline void modify_profile() {
     if (in[5]) {
         now.privilege = new_privilege;
     }
-    User_List.data_insert(username, now);
+    User_List.data_update(username, now);
+    // User_List.data_insert(username, now);
 
     std::cout << now.Username().a << " " << now.Name().a << " " << now.MailAddr().a << " " << now.Privilege() << std::endl;
 }

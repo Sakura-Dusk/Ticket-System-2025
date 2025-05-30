@@ -16,19 +16,22 @@ const int MAX_DEG = 1005;
 template<typename indextype, typename valuetype>
 //需要 indextype 和 valuetype 可比较
 class FileStore {
+	MemoryRiver<valuetype, 2> value_to_int;
     class data {
         private:
             indextype index;
-            valuetype value;
+            int value;
             friend class head_element;
             friend class FileStore;
 
         public:
 
             data() {
-                index = indextype(); value = valuetype();
+                index = indextype(); value = -1;
             }
-            data(indextype index_, valuetype value_) : index(index_), value(value_) {}
+            data(indextype index_, int value_) : index(index_), value(value_) {
+	            // value = value_to_int.write(value_);
+            }
 
             bool operator ==(const data &other) const {
                 return index == other.index && value == other.value;
@@ -41,7 +44,7 @@ class FileStore {
                 return value < other.value;
             }
             bool operator <=(const data &other) const {
-                if (*this == other) return 1;
+                if (*this == other) return true;
                 if (index != other.index) return index < other.index;
                 return value < other.value;
             }
@@ -117,8 +120,16 @@ class FileStore {
 
         void Init(string s) {
             // std::cerr << s << std::endl << s + "_head" << std::endl;
-            if (!std::filesystem::exists(s)) node_storage.initialise(s), root_pos = -1;
-                else node_storage.initialise(s), node_storage.get_info(root_pos, 1);
+            if (!std::filesystem::exists(s)) {
+	            node_storage.initialise(s);
+            	root_pos = -1;
+            	value_to_int.initialise(s + "transfer");
+            }
+            else {
+	            node_storage.initialise(s);
+            	node_storage.get_info(root_pos, 1);
+            	value_to_int.initialise(s + "transfer");
+            }
         	// std::cerr << "read root_pos = " << root_pos << std::endl;
         }
 
@@ -172,7 +183,7 @@ class FileStore {
         	return now_point.id;
         }
 
-		int find_leaf(const indextype &index, const valuetype &value) {
+		int find_leaf(const indextype &index, const int &value) {
         	node_chain[0] = 0;
         	// std::cerr << root_pos << std::endl;
         	if (root_pos == -1) return -1;
@@ -336,7 +347,8 @@ class FileStore {
         }
 
 
-        void data_insert(const indextype index, const valuetype &value) {
+        int data_insert(const indextype index, valuetype value_) {
+        	int value = value_to_int.write(value_);
         	// std::cerr << "in data_insert" << std::endl;
             int leaf_pos = find_leaf(index, value);
             if (leaf_pos == -1) {
@@ -347,7 +359,7 @@ class FileStore {
 				root.key[0] = (data){index, value};
                 write_node(root, root.id);
                 root_pos = root.id;
-                return ;
+                return value;
             }
 
             BPlusNode leaf;
@@ -356,7 +368,7 @@ class FileStore {
         	leaf.insert_leaf_node((data){index, value});
             if (leaf.size < BLOCK_SIZE) {
 				write_node(leaf, leaf_pos);
-				return ;
+				return value;
 			}
 
 			//split to insert
@@ -391,110 +403,111 @@ class FileStore {
 				root_pos = new_root;
 				write_node(root, root_pos);
 				// std::cerr << "write_node root done\n";
-				return ;
+				return value;
 			}
 
 			data new_leaf_key = new_leaf.key[0];
 			insert_in_parent(new_leaf_key, new_leaf.id);
+        	return value;
         }
 
-        void data_delete(const indextype &index, const valuetype &value) {
-        	// std::cerr << "------------------\n";
-        	if (root_pos == -1) return ;
-
-        	// std::cerr << "root_pos = " << root_pos << std::endl; return ;
-        	int leaf_pos = find_leaf(index, value);
-        	// std::cerr << "leaf_pos = " << leaf_pos << std::endl;
-        	BPlusNode leaf = read_node(leaf_pos);
-        	int now = -1;
-        	// std::cerr << "leaf_size = " << leaf.size << std::endl;
-        	for (int i = 0; i < leaf.size; i++) {
-        		// std::cerr << "index = " << leaf.key[i].index << "      value = " << leaf.key[i].value << std::endl;
-        		if (leaf.key[i].index == index && leaf.key[i].value == value) {
-					now = i; break;
-        		}
-        	}
-        	// std::cerr << "now = " << now << std::endl;
-        	if (now == -1) return ;
-        	leaf.erase(now, now);
-
-        	if (node_chain[0] == 1) {
-        		if (leaf.size == 0) root_pos = -1;
-        			else write_node(leaf, leaf.id);
-        		return ;
-        	}
-        	if (leaf.size >= (BLOCK_SIZE - 1) / 2) {
-        		write_node(leaf, leaf.id); return ;
-        	}
-
-        	//find whether brother can give
-        	int parent_id = node_chain[node_chain[0] - 1];
-        	BPlusNode parent = read_node(parent_id);
-        	// std::cerr << "parent.id = " << parent.id << std::endl;
-
-        	int now_son_id = -1;
-        	for (int i = 0; i <= parent.size; i++)
-        		if (parent.children[i] == leaf_pos) {now_son_id = i; break;}
-        	// std::cerr << "delete leaves = " << now_son_id << std::endl;
-        	BPlusNode left_brother, right_brother;
-        	if (now_son_id == 0) {
-        		right_brother = read_node(parent.children[now_son_id + 1]);
-        		if (right_brother.size >= (BLOCK_SIZE - 1) / 2 + 1) {
-        			// std::cerr << "op1";
-        			data point = right_brother.key[0];
-        			right_brother.erase(0, 0);
-
-        			int next = leaf.children[leaf.size]; leaf.children[leaf.size] = 0;
-        			leaf.key[leaf.size] = point; leaf.children[leaf.size + 1] = next; leaf.size++;
-
-        			parent.key[now_son_id] = right_brother.key[0];
-        			write_node(right_brother, right_brother.id);
-        			write_node(leaf, leaf.id);
-        			write_node(parent, parent.id);
-        			return ;
-        		}
-        	}
-        	else {
-        		left_brother = read_node(parent.children[now_son_id - 1]);
-        		// std::cerr << "parent.children[now_son_id - 1] = " << parent.children[now_son_id - 1] << std::endl;
-        		if (left_brother.size >= (BLOCK_SIZE - 1) / 2 + 1) {
-        			// std::cerr << "op2\n";
-        			data point = left_brother.key[left_brother.size - 1];
-        			left_brother.erase(left_brother.size - 1, left_brother.size - 1);
-
-        			for (int i = leaf.size; i >= 1; i--) leaf.key[i] = leaf.key[i - 1];
-        			for (int i = leaf.size + 1; i >= 1; i--) leaf.children[i] = leaf.children[i - 1];
-        			leaf.key[0] = point; leaf.children[0] = 0; leaf.size++;
-
-        			parent.key[now_son_id - 1] = leaf.key[0];
-        			write_node(left_brother, left_brother.id);
-        			write_node(leaf, leaf.id);
-        			write_node(parent, parent.id);
-        			return ;
-        		}
-        	}
-			if (now_son_id == 0) {
-				// std::cerr << "op3\n";
-				for (int i = 0; i < right_brother.size; i++)
-					leaf.key[leaf.size + i] = right_brother.key[i];
-				leaf.children[leaf.size] = 0;
-				leaf.size += right_brother.size;
-				leaf.children[leaf.size] = right_brother.children[right_brother.size];
-				write_node(leaf, leaf.id);
-				delete_parent(now_son_id + 1);
-			}
-        	else {
-        		// std::cerr << "op4\n";
-        		// std::cerr << parent.id << " " << left_brother.id << " " << leaf.id << std::endl;
-        		for (int i = 0; i < leaf.size; i++)
-        			left_brother.key[left_brother.size + i] = leaf.key[i];
-        		left_brother.children[left_brother.size] = 0;
-        		left_brother.size += leaf.size;
-        		left_brother.children[left_brother.size] = leaf.children[leaf.size];
-        		write_node(left_brother, left_brother.id);
-        		delete_parent(now_son_id);
-        	}
-        }
+   //      void data_delete(const indextype &index, const valuetype &value) {
+   //      	// std::cerr << "------------------\n";
+   //      	if (root_pos == -1) return ;
+   //
+   //      	// std::cerr << "root_pos = " << root_pos << std::endl; return ;
+   //      	int leaf_pos = find_leaf(index, value);
+   //      	// std::cerr << "leaf_pos = " << leaf_pos << std::endl;
+   //      	BPlusNode leaf = read_node(leaf_pos);
+   //      	int now = -1;
+   //      	// std::cerr << "leaf_size = " << leaf.size << std::endl;
+   //      	for (int i = 0; i < leaf.size; i++) {
+   //      		// std::cerr << "index = " << leaf.key[i].index << "      value = " << leaf.key[i].value << std::endl;
+   //      		if (leaf.key[i].index == index && leaf.key[i].value == value) {
+			// 		now = i; break;
+   //      		}
+   //      	}
+   //      	// std::cerr << "now = " << now << std::endl;
+   //      	if (now == -1) return ;
+   //      	leaf.erase(now, now);
+   //
+   //      	if (node_chain[0] == 1) {
+   //      		if (leaf.size == 0) root_pos = -1;
+   //      			else write_node(leaf, leaf.id);
+   //      		return ;
+   //      	}
+   //      	if (leaf.size >= (BLOCK_SIZE - 1) / 2) {
+   //      		write_node(leaf, leaf.id); return ;
+   //      	}
+   //
+   //      	//find whether brother can give
+   //      	int parent_id = node_chain[node_chain[0] - 1];
+   //      	BPlusNode parent = read_node(parent_id);
+   //      	// std::cerr << "parent.id = " << parent.id << std::endl;
+   //
+   //      	int now_son_id = -1;
+   //      	for (int i = 0; i <= parent.size; i++)
+   //      		if (parent.children[i] == leaf_pos) {now_son_id = i; break;}
+   //      	// std::cerr << "delete leaves = " << now_son_id << std::endl;
+   //      	BPlusNode left_brother, right_brother;
+   //      	if (now_son_id == 0) {
+   //      		right_brother = read_node(parent.children[now_son_id + 1]);
+   //      		if (right_brother.size >= (BLOCK_SIZE - 1) / 2 + 1) {
+   //      			// std::cerr << "op1";
+   //      			data point = right_brother.key[0];
+   //      			right_brother.erase(0, 0);
+   //
+   //      			int next = leaf.children[leaf.size]; leaf.children[leaf.size] = 0;
+   //      			leaf.key[leaf.size] = point; leaf.children[leaf.size + 1] = next; leaf.size++;
+   //
+   //      			parent.key[now_son_id] = right_brother.key[0];
+   //      			write_node(right_brother, right_brother.id);
+   //      			write_node(leaf, leaf.id);
+   //      			write_node(parent, parent.id);
+   //      			return ;
+   //      		}
+   //      	}
+   //      	else {
+   //      		left_brother = read_node(parent.children[now_son_id - 1]);
+   //      		// std::cerr << "parent.children[now_son_id - 1] = " << parent.children[now_son_id - 1] << std::endl;
+   //      		if (left_brother.size >= (BLOCK_SIZE - 1) / 2 + 1) {
+   //      			// std::cerr << "op2\n";
+   //      			data point = left_brother.key[left_brother.size - 1];
+   //      			left_brother.erase(left_brother.size - 1, left_brother.size - 1);
+   //
+   //      			for (int i = leaf.size; i >= 1; i--) leaf.key[i] = leaf.key[i - 1];
+   //      			for (int i = leaf.size + 1; i >= 1; i--) leaf.children[i] = leaf.children[i - 1];
+   //      			leaf.key[0] = point; leaf.children[0] = 0; leaf.size++;
+   //
+   //      			parent.key[now_son_id - 1] = leaf.key[0];
+   //      			write_node(left_brother, left_brother.id);
+   //      			write_node(leaf, leaf.id);
+   //      			write_node(parent, parent.id);
+   //      			return ;
+   //      		}
+   //      	}
+			// if (now_son_id == 0) {
+			// 	// std::cerr << "op3\n";
+			// 	for (int i = 0; i < right_brother.size; i++)
+			// 		leaf.key[leaf.size + i] = right_brother.key[i];
+			// 	leaf.children[leaf.size] = 0;
+			// 	leaf.size += right_brother.size;
+			// 	leaf.children[leaf.size] = right_brother.children[right_brother.size];
+			// 	write_node(leaf, leaf.id);
+			// 	delete_parent(now_son_id + 1);
+			// }
+   //      	else {
+   //      		// std::cerr << "op4\n";
+   //      		// std::cerr << parent.id << " " << left_brother.id << " " << leaf.id << std::endl;
+   //      		for (int i = 0; i < leaf.size; i++)
+   //      			left_brother.key[left_brother.size + i] = leaf.key[i];
+   //      		left_brother.children[left_brother.size] = 0;
+   //      		left_brother.size += leaf.size;
+   //      		left_brother.children[left_brother.size] = leaf.children[leaf.size];
+   //      		write_node(left_brother, left_brother.id);
+   //      		delete_parent(now_son_id);
+   //      	}
+   //      }
 
         vector <valuetype> data_find(const indextype &index) {
 			vector <valuetype> result;
@@ -505,10 +518,13 @@ class FileStore {
         	// std::cerr << "leaf_pos = " << leaf_pos << std::endl;
         	if (leaf_pos == -1) return result;
 
+        	valuetype tmp = valuetype();
         	BPlusNode leaf = read_node(leaf_pos);
 			for (int i = 0; i < leaf.size; i++)
 				if (leaf.key[i].index == index) {
-					result.push_back(leaf.key[i].value);
+					value_to_int.read(tmp, leaf.key[i].value);
+					result.push_back(tmp);
+					// result.push_back(leaf.key[i].value);
         			// std::cerr << leaf.key[i].value << " ";
 				}
         	// std::cerr << std::endl;
@@ -518,7 +534,9 @@ class FileStore {
 				bool yes = 1;
         		for (int i = 0; i < leaf.size; i++)
         			if (leaf.key[i].index == index) {
-        				result.push_back(leaf.key[i].value);
+        				value_to_int.read(tmp, leaf.key[i].value);
+        				result.push_back(tmp);
+        				// result.push_back(leaf.key[i].value);
         				// std::cerr << leaf.key[i].value << " ";
         			}
         			else {yes = 0; break;}
@@ -533,6 +551,38 @@ class FileStore {
         bool data_find_bool(const indextype &index) {
             vector <valuetype> res = data_find(index);
             return res.size() > 0;
+        }
+
+		void data_update(const indextype &index, valuetype value_) {//must make sure only one
+        	int value = value_to_int.write(value_);
+        	if (root_pos == -1) return ;
+
+        	// std::cerr << "find leaf\n";
+        	int leaf_pos = find_leaf(index);
+        	// std::cerr << "leaf_pos = " << leaf_pos << std::endl;
+        	if (leaf_pos == -1) return ;
+
+        	BPlusNode leaf = read_node(leaf_pos);
+        	for (int i = 0; i < leaf.size; i++)
+        		if (leaf.key[i].index == index) {
+        			leaf.key[i].value = value;
+					write_node(leaf, leaf_pos);
+        			return ;
+        		}
+        	// std::cerr << std::endl;
+        	leaf_pos = leaf.children[leaf.size];
+        	if (leaf_pos > 0) {
+        		leaf = read_node(leaf_pos);
+        		for (int i = 0; i < leaf.size; i++)
+        			if (leaf.key[i].index == index) {
+        				leaf.key[i].value = value;
+						write_node(leaf, leaf_pos);
+        				return ;
+        			}
+        			else {
+        				return ;
+        			}
+        	}
         }
 };
 
