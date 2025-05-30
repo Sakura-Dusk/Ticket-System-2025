@@ -31,6 +31,8 @@ struct year_Time {
     year_Time(int mm = 0, int dd = 0) : mm(mm), dd(dd){}
 };
 int get_all_days(year_Time x) {
+    if (x.mm < 6) return -1000000000;
+    if (x.mm > 8) return 1000000000;
     return x.dd + ((x.mm >= 7) ? 30 : 0) + ((x.mm >= 8) ? 31 : 0);
 }
 year_Time days_to_year_Time(int x) {

@@ -34,7 +34,7 @@ int get_operator_time(string &operator_id) {
 }
 
 int main() {
-    // freopen("1.in", "r", stdin);
+    // freopen("3.in", "r", stdin);
     // freopen("write.txt", "w", stdout);
     Init();
 
