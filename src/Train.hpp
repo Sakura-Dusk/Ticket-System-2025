@@ -122,6 +122,7 @@ void Train_ALL_CLEAN() {
     Train_List.clear_all();
     Place_to_Place_List.clear_all();
     Place_to_Train_List.clear_all();
+    Train_Init();
 }
 
 int add_train() {

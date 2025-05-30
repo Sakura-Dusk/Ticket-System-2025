@@ -108,10 +108,15 @@ public:
     }
 
     void clear_all() {
-        file.close();
-        file.open(file_name, std::ios::out);
-        file.close();
-        file.open(file_name, std::ios::in | std::ios::out | std::ios::binary);
+        int len = file_name.size();
+        char* str = new char[len + 1];
+        for (int i = 0; i < len; i++) str[i] = file_name[i];
+        std::remove(str);
+        delete[] str;
+        // file.close();
+        // file.open(file_name, std::ios::out);
+        // file.close();
+        // file.open(file_name, std::ios::in | std::ios::out | std::ios::binary);
     }
 };
 

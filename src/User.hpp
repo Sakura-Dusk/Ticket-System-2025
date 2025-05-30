@@ -65,6 +65,7 @@ inline void User_ALL_CLEAN() {
     User_List.clear_all();
     User_root.clear_all();
     root_username = chars(); exist_root = false;
+    User_Init();
 }
 
 inline int add_user() {
@@ -97,7 +98,7 @@ inline int add_user() {
     vector<User>res = User_List.data_find(cur_username); if (res.empty()) return -1;//can't find cur_user
     const int cur_user_privilege = res[0].Privilege();
     if (cur_user_privilege <= privilege) return -1;//privilege not ok
-    if (User_Login.data_find(cur_username)[0] == 0) return -1;//cur_user not login
+    if (!User_Login.data_find_bool(cur_username) || User_Login.data_find(cur_username)[0] == 0) return -1;//cur_user not login
     if (User_List.data_find_bool(username)) return -1;//new user already inside
 
     const User now_user(username, password, name, mailAddr, privilege);
@@ -116,7 +117,7 @@ inline int login() {
     }
 
     vector<User>res = User_List.data_find(username); if (res.empty()) return -1;//can't find user
-    if (User_Login.data_find(username)[0]) return -1;//already login
+    if (User_Login.data_find_bool(username) && User_Login.data_find(username)[0]) return -1;//already login
     const chars real_password = res[0].Password();
     if (real_password != password) return -1;//password wrong
     User_Login.data_delete(username, false);
@@ -133,7 +134,7 @@ inline int logout() {
     }
 
     vector<User>res = User_List.data_find(username); if (res.empty()) return -1;//can't find user
-    if (!User_Login.data_find(username)[0]) return -1;//not login
+    if (!User_Login.data_find_bool(username) || !User_Login.data_find(username)[0]) return -1;//not login
     User_Login.data_delete(username, true);
     User_Login.data_insert(username, false);
     return 0;
@@ -152,7 +153,7 @@ inline void query_profile(int operator_time) {
     if (res.empty()) {
         std::cout << "-1\n"; return ;
     }//can't find cur_user
-    if (!User_Login.data_find(cur_username)[0]) {
+    if (!User_Login.data_find_bool(cur_username) || !User_Login.data_find(cur_username)[0]) {
         std::cout << "-1\n"; return ;
     }//cur_user not login
     const int cur_privilege = res[0].Privilege();
@@ -194,7 +195,7 @@ inline void modify_profile() {
         // std::cout << "can't find cur_user\n";
         std::cout << "-1\n"; return ;
     }//can't find cur_user
-    if (!User_Login.data_find(cur_username)[0]) {
+    if (!User_Login.data_find_bool(cur_username) || !User_Login.data_find(cur_username)[0]) {
         // std::cout << "cur_user not login\n";
         std::cout << "-1\n"; return ;
     }//cur_user not login

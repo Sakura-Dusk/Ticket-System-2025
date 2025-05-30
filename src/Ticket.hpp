@@ -124,6 +124,7 @@ void Ticket_Init() {
 void Ticket_ALL_CLEAN() {
     Pending_Train_Ticket_List.clear_all();
     User_Ticket_List.clear_all();
+    Ticket_Init();
 }
 
 void buy_ticket(int operator_time) {
@@ -160,7 +161,7 @@ void buy_ticket(int operator_time) {
         std::cout << "-1\n"; return ;
     }
     User now_user = res0[0];
-    if (!User_Login.data_find(username)[0]) {//user not login
+    if (!User_Login.data_find_bool(username) || !User_Login.data_find(username)[0]) {//user not login
         std::cout << "-1\n"; return ;
     }
 
@@ -259,7 +260,7 @@ void query_order() {
         std::cout << "-1\n"; return ;
     }
     User now_user = vec0[0];
-    if (User_Login.data_find(username)[0] == false) {//user not login
+    if (!User_Login.data_find_bool(username) || User_Login.data_find(username)[0] == false) {//user not login
         std::cout << "-1\n"; return ;
     }
 
@@ -288,7 +289,7 @@ int refund_ticket() {
     vector<User>vec0 = User_List.data_find(username);
     if (vec0.empty()) return -1;//user not found
     User now_user = vec0[0];
-    if (User_Login.data_find(username)[0] == false) return -1;//user not login
+    if (!User_Login.data_find_bool(username) || User_Login.data_find(username)[0] == false) return -1;//user not login
 
     vector<Ticket>vec1 = User_Ticket_List.data_find(username);
     if (vec1.size() < number) return -1;//no enough ticket
