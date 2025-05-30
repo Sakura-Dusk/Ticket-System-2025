@@ -34,7 +34,7 @@ int get_operator_time(string &operator_id) {
 }
 
 int main() {
-    // freopen("3.in", "r", stdin);
+    // freopen("1.in", "r", stdin);
     // freopen("write.txt", "w", stdout);
     Init();
 
@@ -60,7 +60,7 @@ int main() {
             continue;
         }
         if (operator_type == "query_profile") {
-            query_profile();
+            query_profile(get_operator_time(operator_id));
             continue;
         }
         if (operator_type == "modify_profile") {

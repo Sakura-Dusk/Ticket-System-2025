@@ -133,7 +133,7 @@ int logout() {
     return 0;
 }
 
-void query_profile() {
+void query_profile(int operator_time) {
     chars cur_username, username;
     chars read_op;
     for (int i = 1; i <= 2; i++) {
@@ -155,7 +155,10 @@ void query_profile() {
         std::cout << "-1\n"; return ;
     }//can't find user
     int privilege = res[0].Privilege();
-    if (cur_privilege < privilege) {
+    // if (operator_time == 1703) {
+    //     std::cerr << "cur_privilege = " << cur_privilege << " , privilege = " << privilege << std::endl;
+    // }
+    if (cur_privilege < privilege || (cur_privilege == privilege && cur_username != username)) {
         std::cout << "-1\n"; return ;
     }//cur_user privilege lower than user privilege
     User now = res[0];
