@@ -341,7 +341,7 @@ void query_train() {
     }
 }
 
-void query_ticket() {
+void query_ticket(int operator_time) {
     chars start_station, end_station;
     year_Time Date;
     bool strategy = 0;
@@ -382,12 +382,18 @@ void query_ticket() {
                 pass_time += now_train.travelTimes[j];
                 if (j && j < now_train.stationNum - 1) pass_time += now_train.stopoverTimes[j];
             }
+        // if (operator_time == 3524) {
+        //     std::cerr << "loc = " << loc << std::endl;
+        // }
         Time first_time(now_train.saleDate_start, now_train.startTime); first_time += pass_time;
         Time last_time(now_train.saleDate_end, now_train.startTime); last_time += pass_time;
         if (get_all_days(Date) < get_all_days(first_time.x) || get_all_days(Date) > get_all_days(last_time.x)) continue;
         int need_time = 0, need_money = 0;
         //clac need_time and need_money
         for (int j = loc; j < now_train.stationNum; j++) {
+            // if (operator_time == 3524) {
+            //     std::cerr << "now station = " << now_train.stations[j].a << std::endl;
+            // }
             if (now_train.stations[j] == end_station) {
                 break;
             }
@@ -396,6 +402,9 @@ void query_ticket() {
                 need_money += now_train.prices[j];
                 if (j != loc) need_time += now_train.stopoverTimes[j];
             }
+            // if (operator_time == 3524) {
+            //     std::cerr << "need_money = " << need_money << " , need_time = " << need_time << std::endl;
+            // }
         }
         ans.push_back(std::make_tuple(now_train, need_time, need_money));
     }
@@ -448,7 +457,7 @@ void query_ticket() {
         start_time.x = Date;
         int need_time = 0, need_money = 0, seat_number = 1000000000;
         //clac need_time and need_money
-        for (int j = loc + 1; j < now_train.stationNum; j++) {
+        for (int j = loc; j < now_train.stationNum; j++) {
             if (now_train.stations[j] == end_station) {
                 break;
             }

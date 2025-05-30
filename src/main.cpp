@@ -34,7 +34,8 @@ int get_operator_time(string &operator_id) {
 }
 
 int main() {
-    // freopen("write.txt", "w", stdout);
+    freopen("2.in", "r", stdin);
+    freopen("write.txt", "w", stdout);
     Init();
 
     while (1) {
@@ -85,7 +86,7 @@ int main() {
         }
 
         if (operator_type == "query_ticket") {
-            query_ticket();
+            query_ticket(get_operator_time(operator_id));
             continue;
         }
         if (operator_type == "query_transfer") {
@@ -95,6 +96,14 @@ int main() {
 
         if (operator_type == "buy_ticket") {
             buy_ticket(get_operator_time(operator_id));
+            continue;
+        }
+        if (operator_type == "query_order") {
+            query_order();
+            continue;
+        }
+        if (operator_type == "refund_ticket") {
+            std::cout << refund_ticket() << std::endl;
             continue;
         }
 
