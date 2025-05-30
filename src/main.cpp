@@ -22,12 +22,12 @@ void ALL_CLEAN() {
     Ticket_ALL_CLEAN();
 }
 
-int get_operator_time(string &operator_id) {
-    int len = operator_id.length();
+int get_operator_time(const string &operator_ID) {
+    const int len = static_cast<int>(operator_ID.length());
     int res = 0, i = 0;
-    while (i < len && (operator_id[i] < '0' || operator_id[i] > '9')) i++;
-    while (i < len && operator_id[i] >= '0' && operator_id[i] <= '9') {
-        res = res * 10 + operator_id[i] - '0';
+    while (i < len && (operator_ID[i] < '0' || operator_ID[i] > '9')) i++;
+    while (i < len && operator_ID[i] >= '0' && operator_ID[i] <= '9') {
+        res = res * 10 + operator_ID[i] - '0';
         i++;
     }
     return res;
@@ -38,7 +38,7 @@ int main() {
     // freopen("write.txt", "w", stdout);
     Init();
 
-    while (1) {
+    while (true) {
         string operator_id;
         std::cin >> operator_id;
 

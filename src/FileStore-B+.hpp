@@ -7,8 +7,8 @@
 
 #include "Chars.hpp"
 #include "vector.hpp"
-#include "MemoryRiver_With_Cache.hpp"
-
+// #include "MemoryRiver_With_Cache.hpp"
+#include "MemoryRiver.hpp"
 
 const int BLOCK_SIZE = 16;
 const int MAX_DEG = 1005;
@@ -102,7 +102,8 @@ class FileStore {
     private:
 		friend class USER;
 
-        MEMORYRIVER_WITH_CACHE<BPlusNode, 2> node_storage; // Stores root position and next_pos
+        // MEMORYRIVER_WITH_CACHE<BPlusNode, 2> node_storage; // Stores root position and next_pos
+		MemoryRiver<BPlusNode, 2> node_storage; // Stores root position and next_pos
         int root_pos;
 		int node_chain[MAX_DEG];
 
