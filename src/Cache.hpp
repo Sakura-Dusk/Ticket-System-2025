@@ -7,7 +7,7 @@
 
 #include "Hash.hpp"
 
-template <typename datatype, int MAX_LEN = 32>
+template <typename datatype, int MAX_LEN = 128>
 class CACHE {
     public:
         struct Data {

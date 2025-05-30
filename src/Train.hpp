@@ -109,8 +109,52 @@ public:
     }
 };
 
+struct Journey {
+    chars trainID;
+    int pos, pos_to;
+    Time first_time, last_time;
+    int need_time, need_money;
+
+    Journey(){}
+    Journey(Train &now_train, int pos, int pos_to) : pos(pos), pos_to(pos_to) {
+        trainID = now_train.trainID;
+        int pass_time = 0;
+        for (int j = 0; j < now_train.stationNum; j++)
+            if (j == pos) {
+                if (j && j < now_train.stationNum - 1) pass_time += now_train.stopoverTimes[j];
+                break;
+            }
+            else {
+                pass_time += now_train.travelTimes[j];
+                if (j && j < now_train.stationNum - 1) pass_time += now_train.stopoverTimes[j];
+            }
+        first_time = Time(now_train.saleDate_start, now_train.startTime); first_time += pass_time;
+        last_time =  Time(now_train.saleDate_end, now_train.startTime); last_time += pass_time;
+        need_time = 0; need_money = 0;
+        for (int j = pos; j < now_train.stationNum; j++) {
+            if (j == pos_to) {
+                break;
+            }
+            else {
+                need_time += now_train.travelTimes[j];
+                need_money += now_train.prices[j];
+                if (j != pos) need_time += now_train.stopoverTimes[j];
+            }
+        }
+    }
+
+    bool operator ==(const Journey other) const {
+        return (trainID == other.trainID) && (pos == other.pos) && (pos_to == other.pos_to);
+    }
+    bool operator <(const Journey other) const {
+        if (trainID != other.trainID) return trainID < other.trainID;
+        if (pos != other.pos) return pos < other.pos;
+        return pos_to < other.pos;
+    }
+};
+
 FileStore<chars, Train> Train_List;
-FileStore<std::pair<chars, chars>, chars> Place_to_Place_List;//pair<station,station> -> trainID
+FileStore<std::pair<chars, chars>, Journey> Place_to_Place_List;//pair<station,station> -> trainID
 FileStore<chars, chars> Place_to_Train_List;//station -> trainID
 
 void Train_Init() {
@@ -263,8 +307,9 @@ int release_train() {
 
     //part about query_ticket : Place_to_Place_List
     for (int i = 0; i < now_train.stationNum; i++)
-        for (int j = i + 1; j < now_train.stationNum; j++)
-            Place_to_Place_List.data_insert(std::make_pair(now_train.stations[i], now_train.stations[j]), trainID);
+        for (int j = i + 1; j < now_train.stationNum; j++) {
+            Place_to_Place_List.data_insert(std::make_pair(now_train.stations[i], now_train.stations[j]), Journey(now_train, i, j));
+        }
     //put on the ticket on sell
     int total_days = get_days(now_train.saleDate_start, now_train.saleDate_end) + 1;
     for (int i = 0; i < total_days; i++)
@@ -273,9 +318,6 @@ int release_train() {
     //part about query_transfer : Place_to_Train_List
     for (int i = 0; i < now_train.stationNum; i++)
         Place_to_Train_List.data_insert(now_train.stations[i], trainID);
-
-    //do other things about what release need
-    //TBD
 
     Train_List.data_insert(trainID, now_train);
     return 0;
@@ -372,49 +414,16 @@ void query_ticket(int operator_time) {
     // std::cerr << "done read part\n";
     // return ;
 
-    vector<std::tuple<Train, int, int> >ans;
-    vector<chars>res = Place_to_Place_List.data_find(std::make_pair(start_station, end_station));
+    vector<std::tuple<Journey, int, int> >ans;
+    vector<Journey>res = Place_to_Place_List.data_find(std::make_pair(start_station, end_station));
     for (int i = 0; i < res.size(); i++) {
-        chars train_ID = res[i];
-        Train now_train = Train_List.data_find(train_ID)[0];
-        int loc = -1, pass_time = 0;
-        for (int j = 0; j < now_train.stationNum; j++)
-            if (now_train.stations[j] == start_station) {
-                if (j && j < now_train.stationNum - 1) pass_time += now_train.stopoverTimes[j];
-                loc = j; break;
-            }
-            else {
-                pass_time += now_train.travelTimes[j];
-                if (j && j < now_train.stationNum - 1) pass_time += now_train.stopoverTimes[j];
-            }
-        // if (operator_time == 3524) {
-        //     std::cerr << "loc = " << loc << std::endl;
-        // }
-        Time first_time(now_train.saleDate_start, now_train.startTime); first_time += pass_time;
-        Time last_time(now_train.saleDate_end, now_train.startTime); last_time += pass_time;
-        if (get_all_days(Date) < get_all_days(first_time.x) || get_all_days(Date) > get_all_days(last_time.x)) continue;
-        int need_time = 0, need_money = 0;
-        //clac need_time and need_money
-        for (int j = loc; j < now_train.stationNum; j++) {
-            // if (operator_time == 3524) {
-            //     std::cerr << "now station = " << now_train.stations[j].a << std::endl;
-            // }
-            if (now_train.stations[j] == end_station) {
-                break;
-            }
-            else {
-                need_time += now_train.travelTimes[j];
-                need_money += now_train.prices[j];
-                if (j != loc) need_time += now_train.stopoverTimes[j];
-            }
-            // if (operator_time == 3524) {
-            //     std::cerr << "need_money = " << need_money << " , need_time = " << need_time << std::endl;
-            // }
-        }
-        ans.push_back(std::make_tuple(now_train, need_time, need_money));
+        Journey now_Journey = res[i];
+        if (get_all_days(Date) < get_all_days(now_Journey.first_time.x) || get_all_days(Date) > get_all_days(now_Journey.last_time.x)) continue;
+        ans.push_back(std::make_tuple(now_Journey, now_Journey.need_time, now_Journey.need_money));
     }
 
     // std::cerr << "find all answers\n";
+    // return ;
 
     vector <int> id; for (int i = 0; i < ans.size(); i++) id.push_back(i);
     if (ans.size()) {
@@ -445,40 +454,21 @@ void query_ticket(int operator_time) {
 
     std::cout << ans.size() << std::endl;
     for (int i = 0; i < ans.size(); i++) {
-        Train now_train = std::get<0>(ans[id[i]]);
+        Journey now_Journey = std::get<0>(ans[id[i]]);
 
-        int loc = -1, pass_time = 0;
-        for (int j = 0; j < now_train.stationNum; j++)
-            if (now_train.stations[j] == start_station) {
-                if (j && j < now_train.stationNum - 1) pass_time += now_train.stopoverTimes[j];
-                loc = j; break;
-            }
-            else {
-                pass_time += now_train.travelTimes[j];
-                if (j && j < now_train.stationNum - 1) pass_time += now_train.stopoverTimes[j];
-            }
-        Time start_time(now_train.saleDate_start, now_train.startTime); start_time += pass_time;
-        int day_id = get_days(start_time.x, Date);
-        start_time.x = Date;
-        int need_time = 0, need_money = 0, seat_number = 1000000000;
-        //clac need_time and need_money
-        for (int j = loc; j < now_train.stationNum; j++) {
-            if (now_train.stations[j] == end_station) {
-                break;
-            }
-            else {
-                need_time += now_train.travelTimes[j]; seat_number = std::min(seat_number, now_train.ticket_left[day_id][j]);
-                need_money += now_train.prices[j];
-                if (j != loc) need_time += now_train.stopoverTimes[j];
-            }
-        }
-        Time end_time = start_time; end_time += need_time;
+        Train now_train = Train_List.data_find(now_Journey.trainID)[0];
+        int day_id = get_days(now_Journey.first_time.x, Date);
+        Time start_time = Time(Date, now_Journey.first_time.y);
+        Time end_time = start_time; end_time += now_Journey.need_time;
+
+        int seat_number = 1000000000;
+        for (int j = now_Journey.pos; j < now_Journey.pos_to; j++) seat_number = std::min(seat_number, now_train.ticket_left[day_id][j]);
 
         std::cout << now_train.trainID.a << " " << start_station.a << " ";
         start_time.write();
         std::cout << " -> " << end_station.a << " ";
         end_time.write();
-        std::cout << " " << need_money << " " << seat_number << std::endl;
+        std::cout << " " << now_Journey.need_money << " " << seat_number << std::endl;
     }
 }
 
@@ -505,6 +495,8 @@ void query_transfer() {
         c = getchar();
         while (c != '\n' && c != '-') c = getchar();
     }
+
+    // return ;
 
     //first find all train that start from start_station
     bool find_solution = 0; std::tuple<Train, Train, int, int, chars, Time, Time, Time, Time, int, int> ans;
@@ -541,24 +533,15 @@ void query_transfer() {
 
             //code from query_ticket
             chars mid_station = first_train.stations[pos_1_to];
-            vector<chars>res = Place_to_Place_List.data_find(std::make_pair(mid_station, end_station));
+            vector<Journey>res = Place_to_Place_List.data_find(std::make_pair(mid_station, end_station));
             for (int i = 0; i < res.size(); i++) {
-                chars train_ID = res[i];
+                Journey now_Journey = res[i];
+                chars train_ID = now_Journey.trainID;
                 Train now_train = Train_List.data_find(train_ID)[0];
                 if (now_train.trainID == first_train.trainID) continue;
-                int loc = -1, pass_time = 0;
-                for (int j = 0; j < now_train.stationNum; j++)
-                    if (now_train.stations[j] == mid_station) {
-                        if (j && j < now_train.stationNum - 1) pass_time += now_train.stopoverTimes[j];
-                        loc = j; break;
-                    }
-                    else {
-                        pass_time += now_train.travelTimes[j];
-                        if (j && j < now_train.stationNum - 1) pass_time += now_train.stopoverTimes[j];
-                    }
 
-                Time first_time(now_train.saleDate_start, now_train.startTime); first_time += pass_time;
-                Time last_time(now_train.saleDate_end, now_train.startTime); last_time += pass_time;
+                int loc = now_Journey.pos;
+                Time first_time = now_Journey.first_time, last_time = now_Journey.last_time;
                 if (Time_to_Minutes(first_train_arrrive_time) > Time_to_Minutes(last_time)) continue;
                 Time second_train_time(first_time.x, first_time.y);
                 if (get_all_minutes(first_time.y) >= get_all_minutes(first_train_arrrive_time.y)) {
@@ -570,19 +553,9 @@ void query_transfer() {
                     // second_train_time.x = std::max(second_train_time.x, days_to_year_Time(get_all_days(first_train_arrrive_time.x) + 1));
                 }
                 int second_train_day_id = get_days(first_time.x, second_train_time.x);
-                int need_time = 0, need_money = 0;
-                //clac need_time and need_money
-                for (int j = loc; j < now_train.stationNum; j++) {
-                    if (now_train.stations[j] == end_station) {
-                        break;
-                    }
-                    else {
-                        need_time += now_train.travelTimes[j];
-                        need_money += now_train.prices[j];
-                        if (j != loc) need_time += now_train.stopoverTimes[j];
-                    }
-                }
+                int need_time = now_Journey.need_time, need_money = now_Journey.need_money;
                 Time second_train_arrive_time(second_train_time.x, second_train_time.y); second_train_arrive_time += need_time;
+
                 int total_money = first_train_money + need_money;
                 int total_time = get_times(first_train_time, second_train_arrive_time);
                 std::tuple<Train, Train, int, int, chars, Time, Time, Time, Time, int, int> maybe_ans(first_train, now_train, total_time, total_money, mid_station, first_train_time, first_train_arrrive_time, second_train_time, second_train_arrive_time, first_train_day_id, second_train_day_id);

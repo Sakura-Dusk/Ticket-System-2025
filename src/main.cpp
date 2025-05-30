@@ -33,6 +33,11 @@ int get_operator_time(const string &operator_ID) {
     return res;
 }
 
+void SKIP_HOLE_LINE() {
+    std::string tmp;
+    std:getline(std::cin, tmp);
+}
+
 int main() {
     Init();
 
@@ -67,40 +72,49 @@ int main() {
         }
 
         if (operator_type == "add_train") {
+            // SKIP_HOLE_LINE(); continue;
             std::cout << add_train() << "\n";
             continue;
         }
         if (operator_type == "delete_train") {
+            // SKIP_HOLE_LINE(); continue;
             std::cout << delete_train() << "\n";
             continue;
         }
         if (operator_type == "release_train") {
+            // SKIP_HOLE_LINE(); continue;
             std::cout << release_train() << "\n";
             continue;
         }
         if (operator_type == "query_train") {
+            // SKIP_HOLE_LINE(); continue;
             query_train();
             continue;
         }
 
         if (operator_type == "query_ticket") {
+            // SKIP_HOLE_LINE(); continue;
             query_ticket(get_operator_time(operator_id));
             continue;
         }
         if (operator_type == "query_transfer") {
+            // SKIP_HOLE_LINE(); continue;
             query_transfer();
             continue;
         }
 
         if (operator_type == "buy_ticket") {
+            // SKIP_HOLE_LINE(); continue;
             buy_ticket(get_operator_time(operator_id));
             continue;
         }
         if (operator_type == "query_order") {
+            // SKIP_HOLE_LINE(); continue;
             query_order();
             continue;
         }
         if (operator_type == "refund_ticket") {
+            // SKIP_HOLE_LINE(); continue;
             std::cout << refund_ticket() << std::endl;
             continue;
         }

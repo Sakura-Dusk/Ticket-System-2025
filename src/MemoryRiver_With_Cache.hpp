@@ -8,7 +8,7 @@
 #include "Cache.hpp"
 #include "MemoryRiver.hpp"
 
-template<class T, int info_len = 2, int MAX_LEN = 32>
+template<class T, int info_len = 2, int MAX_LEN = 128>
 class MEMORYRIVER_WITH_CACHE {
     private:
         MemoryRiver<T, info_len> memory_river;
