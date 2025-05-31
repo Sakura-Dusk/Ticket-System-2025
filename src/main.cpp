@@ -99,7 +99,7 @@ int main() {
         }
         if (operator_type == "query_transfer") {
             // SKIP_HOLE_LINE(); continue;
-            query_transfer();
+            query_transfer(get_operator_time(operator_id));
             continue;
         }
 

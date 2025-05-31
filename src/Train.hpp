@@ -480,7 +480,7 @@ void query_ticket(int operator_time) {
     }
 }
 
-void query_transfer() {
+void query_transfer(int operator_time) {
     chars start_station, end_station;
     year_Time Date;
     bool strategy = 0;

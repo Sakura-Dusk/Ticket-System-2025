@@ -182,6 +182,10 @@ void buy_ticket(int operator_time) {
         std::cout << "-1\n"; return ;
     }
 
+    if (now_train.seatNum < number) {//no enough seat
+        std::cout << "-1\n"; return ;
+    }
+
     int start_pos = -1;
     for (int i = 0; i < now_train.stationNum; i++)
         if (start_station == now_train.stations[i]) {start_pos = i; break;}
