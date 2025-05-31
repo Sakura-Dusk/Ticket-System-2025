@@ -65,7 +65,8 @@ public:
     }
 
     void give_back_seat() {
-        Train now_train = Train_List.data_find(trainID)[0];
+        int now_train_id = Train_List.data_find(trainID)[0];
+        Train now_train; Train_id.read(now_train, now_train_id);
         int pos = -1;
         for (int i = 0; i < now_train.stationNum; i++)
             if (now_train.stations[i] == from_place) {pos = i; break;}
@@ -74,14 +75,15 @@ public:
             if (now_train.stations[i] == to_place) {pos_to = i; break;}
 
         //give back the seats
-        Train_List.data_delete(trainID, now_train);
+        // Train_List.data_delete(trainID, now_train);
         for (int i = pos; i < pos_to; i++) now_train.ticket_left[number_of_train][i] += number;
-        Train_List.data_insert(trainID, now_train);
+        // Train_List.data_insert(trainID, now_train);
+        Train_id.update(now_train, now_train_id);
     }
 
     int check_maximum_ticket() {
         int maximum_ticket = 1000000000;
-        Train now_train = Train_List.data_find(trainID)[0];
+        Train now_train; Train_id.read(now_train, Train_List.data_find(trainID)[0]);
         int pos = -1;
         for (int i = 0; i < now_train.stationNum; i++)
             if (now_train.stations[i] == from_place) {pos = i; break;}
@@ -98,7 +100,8 @@ public:
     }
 
     void turn_to_success() {
-        Train now_train = Train_List.data_find(trainID)[0];
+        int now_train_id = Train_List.data_find(trainID)[0];
+        Train now_train; Train_id.read(now_train, now_train_id);
         int pos = -1;
         for (int i = 0; i < now_train.stationNum; i++)
             if (now_train.stations[i] == from_place) {pos = i; break;}
@@ -107,21 +110,25 @@ public:
             if (now_train.stations[i] == to_place) {pos_to = i; break;}
 
         //take the tickets
-        Train_List.data_delete(trainID, now_train);
+        // Train_List.data_delete(trainID, now_train);
         for (int i = pos; i < pos_to; i++) now_train.ticket_left[number_of_train][i] -= number;
-        Train_List.data_insert(trainID, now_train);
+        // Train_List.data_insert(trainID, now_train);
+        Train_id.update(now_train, now_train_id);
     }
 };
 
-FileStore<std::pair<chars, int>, Ticket> Pending_Train_Ticket_List;//make_pair(trainID, number of train) -> Pending Ticket about this train
-FileStore<chars, Ticket> User_Ticket_List;//userID -> this user's Ticket
+MemoryRiver<Ticket, 1> Ticket_id;
+FileStore<std::pair<chars, int>, int> Pending_Train_Ticket_List;//make_pair(trainID, number of train) -> Pending Ticket about this train
+FileStore<chars, int> User_Ticket_List;//userID -> this user's Ticket
 
 void Ticket_Init() {
+    Ticket_id.initialise("Ticket_id");
     Pending_Train_Ticket_List.Init("Pending_Train_Ticket_List");
     User_Ticket_List.Init("User_Ticket_List");
 }
 
 void Ticket_ALL_CLEAN() {
+    Ticket_id.clear_all();
     Pending_Train_Ticket_List.clear_all();
     User_Ticket_List.clear_all();
     Ticket_Init();
@@ -156,20 +163,21 @@ void buy_ticket(int operator_time) {
         while (c != '\n' && c != '-') c = getchar();
     }
 
-    vector<User>res0 = User_List.data_find(username);
+    vector<int>res0 = User_List.data_find(username);
     if (res0.empty()) {//user not found
         std::cout << "-1\n"; return ;
     }
-    User now_user = res0[0];
+    User now_user; User_id.read(now_user, res0[0]);
     if (!User_Login.data_find_bool(username) || !User_Login.data_find(username)[0]) {//user not login
         std::cout << "-1\n"; return ;
     }
 
-    vector<Train>res1 = Train_List.data_find(trainID);
+    vector<int>res1 = Train_List.data_find(trainID);
     if (res1.empty()) {//train not found
         std::cout << "-1\n"; return ;
     }
-    Train now_train = res1[0];
+    int now_train_id = res1[0];
+    Train now_train; Train_id.read(now_train, now_train_id);
     if (now_train.is_release == false) {//train not release
         std::cout << "-1\n"; return ;
     }
@@ -221,15 +229,17 @@ void buy_ticket(int operator_time) {
     // arriving_time.write(); std::cout << std::endl;
 
     if (have_minimum_ticket >= number) {//successfully buy the ticket
-        Train_List.data_delete(trainID, now_train);//update the train's ticket_left
+        // Train_List.data_delete(trainID, now_train);//update the train's ticket_left
         for (int i = start_pos; i < end_pos; i++) {
             now_train.ticket_left[number_of_train][i] -= number;
         }
-        Train_List.data_insert(trainID, now_train);
+        // Train_List.data_insert(trainID, now_train);
+        Train_id.update(now_train, now_train_id);
 
         Ticket now_ticket(operator_time, username, trainID, start_station, end_station, number_of_train, leaving_time, arriving_time, number, price, 1);
         // std::cerr << "ready to insert ticket\n";
-        User_Ticket_List.data_insert(username, now_ticket);
+        int now_ticket_id = Ticket_id.write(now_ticket);
+        User_Ticket_List.data_insert(username, now_ticket_id);
 
         std::cout << 1ll * price * number << std::endl;
         return ;
@@ -241,8 +251,9 @@ void buy_ticket(int operator_time) {
 
     //Go to pending queue
     Ticket now_ticket(operator_time, username, trainID, start_station, end_station, number_of_train, leaving_time, arriving_time, number, price, 0);
-    Pending_Train_Ticket_List.data_insert(std::make_pair(trainID, number_of_train), now_ticket);
-    User_Ticket_List.data_insert(username, now_ticket);
+    int now_ticket_id = Ticket_id.write(now_ticket);
+    Pending_Train_Ticket_List.data_insert(std::make_pair(trainID, number_of_train), now_ticket_id);
+    User_Ticket_List.data_insert(username, now_ticket_id);
     std::cout << "queue\n";
 }
 
@@ -255,19 +266,19 @@ void query_order() {
         if (read_op == Chars("-u")) std::cin >> username.a;
     }
 
-    vector<User>vec0 = User_List.data_find(username);
+    vector<int>vec0 = User_List.data_find(username);
     if (vec0.empty()) {//user not found
         std::cout << "-1\n"; return ;
     }
-    User now_user = vec0[0];
+    User now_user; User_id.read(now_user, vec0[0]);
     if (!User_Login.data_find_bool(username) || User_Login.data_find(username)[0] == false) {//user not login
         std::cout << "-1\n"; return ;
     }
 
-    vector<Ticket>vec1 = User_Ticket_List.data_find(username);
+    vector<int>vec1 = User_Ticket_List.data_find(username);
     std::cout << vec1.size() << std::endl;
     for (int i = (int)vec1.size() - 1; i >= 0; i--) {
-        Ticket now_ticket = vec1[i];
+        Ticket now_ticket; Ticket_id.read(now_ticket, vec1[i]);
         now_ticket.write(); putchar('\n');
     }
 }
@@ -286,35 +297,39 @@ int refund_ticket() {
         while (c != '\n' && c != '-') c = getchar();
     }
 
-    vector<User>vec0 = User_List.data_find(username);
+    vector<int>vec0 = User_List.data_find(username);
     if (vec0.empty()) return -1;//user not found
-    User now_user = vec0[0];
+    User now_user; User_id.read(now_user, vec0[0]);
     if (!User_Login.data_find_bool(username) || User_Login.data_find(username)[0] == false) return -1;//user not login
 
-    vector<Ticket>vec1 = User_Ticket_List.data_find(username);
+    vector<int>vec1 = User_Ticket_List.data_find(username);
     if (vec1.size() < number) return -1;//no enough ticket
-    Ticket now_ticket = vec1[vec1.size() - number];
+    int now_ticket_id = vec1[vec1.size() - number];
+    Ticket now_ticket; Ticket_id.read(now_ticket, now_ticket_id);
 
     if (now_ticket.status == -1) return -1;//ticket already refunded
     if (now_ticket.status == 0) {//pending -> refund
-        User_Ticket_List.data_delete(username, now_ticket);
-        Pending_Train_Ticket_List.data_delete(now_ticket.train_data_get(), now_ticket);
+        // User_Ticket_List.data_delete(username, now_ticket);
+        Pending_Train_Ticket_List.data_delete(now_ticket.train_data_get(), now_ticket_id);
         now_ticket.status = -1;
-        User_Ticket_List.data_insert(username, now_ticket);
+        // User_Ticket_List.data_insert(username, now_ticket);
+        Ticket_id.update(now_ticket, now_ticket_id);
         return 0;
     }
     if (now_ticket.status == 1) {
-        User_Ticket_List.data_delete(username, now_ticket);
+        // User_Ticket_List.data_delete(username, now_ticket);
         now_ticket.status = -1;
-        User_Ticket_List.data_insert(username, now_ticket);
+        // User_Ticket_List.data_insert(username, now_ticket);
+        Ticket_id.update(now_ticket, now_ticket_id);
 
         now_ticket.give_back_seat();
 
         //check the pending queue
         std::pair<chars, int> train_data = now_ticket.train_data_get();
-        vector<Ticket>pending_queue = Pending_Train_Ticket_List.data_find(train_data);
+        vector<int>pending_queue = Pending_Train_Ticket_List.data_find(train_data);
         for (int i = 0; i < pending_queue.size(); i++) {//every pending ticket
-            Ticket pending_ticket = pending_queue[i];
+            int pending_ticket_id = pending_queue[i];
+            Ticket pending_ticket; Ticket_id.read(pending_ticket, pending_ticket_id);
             // std::cerr << "pending_ticket = ";
             // pending_ticket.write(); putchar('\n');
             int maximum_ticket = pending_ticket.check_maximum_ticket();
@@ -324,10 +339,11 @@ int refund_ticket() {
 
                 //update the status
                 chars pending_ticket_username = pending_ticket.username_get();
-                Pending_Train_Ticket_List.data_delete(train_data, pending_ticket);
-                User_Ticket_List.data_delete(pending_ticket_username, pending_ticket);
+                Pending_Train_Ticket_List.data_delete(train_data, pending_ticket_id);
+                // User_Ticket_List.data_delete(pending_ticket_username, pending_ticket);
                 pending_ticket.status = 1;
-                User_Ticket_List.data_insert(pending_ticket_username, pending_ticket);
+                // User_Ticket_List.data_insert(pending_ticket_username, pending_ticket);
+                Ticket_id.update(pending_ticket, pending_ticket_id);
             }
         }
 

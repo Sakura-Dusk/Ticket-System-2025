@@ -153,17 +153,23 @@ struct Journey {
     }
 };
 
-FileStore<chars, Train> Train_List;
-FileStore<std::pair<chars, chars>, Journey> Place_to_Place_List;//pair<station,station> -> trainID
+inline MemoryRiver<Train, 1> Train_id;
+inline MemoryRiver<Journey, 1> Journey_id;
+FileStore<chars, int> Train_List;
+FileStore<std::pair<chars, chars>, int> Place_to_Place_List;//pair<station,station> -> trainID
 FileStore<chars, chars> Place_to_Train_List;//station -> trainID
 
 void Train_Init() {
+    Train_id.initialise("Train_id");
+    Journey_id.initialise("Journey_id");
     Train_List.Init("Train_List");
     Place_to_Place_List.Init("Place_to_Place_List");
     Place_to_Train_List.Init("Place_to_Train_List");
 }
 
 void Train_ALL_CLEAN() {
+    Train_id.clear_all();
+    Journey_id.clear_all();
     Train_List.clear_all();
     Place_to_Place_List.clear_all();
     Place_to_Train_List.clear_all();
@@ -270,7 +276,8 @@ int add_train() {
 
     if (Train_List.data_find_bool(trainID)) return -1;//trainID already exist
     Train now_train(trainID, stationNum, stations, seatNum, prices, startTime, travelTimes, stopoverTimes, saleDate_start, saleDate_end, type);
-    Train_List.data_insert(trainID, now_train);
+    int now_train_id = Train_id.write(now_train);
+    Train_List.data_insert(trainID, now_train_id);
     // std::cerr << "Try build, stationNum = " << stationNum << std::endl;
     return 0;
 }
@@ -283,11 +290,11 @@ int delete_train() {
         std::cin >> read_op.a;
         if (read_op == Chars("-i")) std::cin >> trainID.a;
     }
-    vector<Train> res = Train_List.data_find(trainID);
+    vector<int> res = Train_List.data_find(trainID);
     if (res.empty()) return -1;//train not found
-    Train now_train = res[0];
+    Train now_train; Train_id.read(now_train, res[0]);
     if (now_train.is_release) return -1;//train already released
-    Train_List.data_delete(trainID, now_train);
+    Train_List.data_delete(trainID, res[0]);
     return 0;
 }
 
@@ -298,17 +305,18 @@ int release_train() {
         std::cin >> read_op.a;
         if (read_op == Chars("-i")) std::cin >> trainID.a;
     }
-    vector<Train> res = Train_List.data_find(trainID);
+    vector<int> res = Train_List.data_find(trainID);
     if (res.empty()) return -1;//train not found
-    Train now_train = res[0];
+    Train now_train; Train_id.read(now_train, res[0]);
     if (now_train.is_release) return -1;//train already released
-    Train_List.data_delete(trainID, now_train);
     now_train.is_release = true;
 
     //part about query_ticket : Place_to_Place_List
     for (int i = 0; i < now_train.stationNum; i++)
         for (int j = i + 1; j < now_train.stationNum; j++) {
-            Place_to_Place_List.data_insert(std::make_pair(now_train.stations[i], now_train.stations[j]), Journey(now_train, i, j));
+            Journey journey(now_train, i, j);
+            int journey_id = Journey_id.write(journey);
+            Place_to_Place_List.data_insert(std::make_pair(now_train.stations[i], now_train.stations[j]), journey_id);
         }
     //put on the ticket on sell
     int total_days = get_days(now_train.saleDate_start, now_train.saleDate_end) + 1;
@@ -319,7 +327,7 @@ int release_train() {
     for (int i = 0; i < now_train.stationNum; i++)
         Place_to_Train_List.data_insert(now_train.stations[i], trainID);
 
-    Train_List.data_insert(trainID, now_train);
+    Train_id.update(now_train, res[0]);
     return 0;
 }
 
@@ -341,12 +349,12 @@ void query_train() {
     }
 
     //TBD
-    vector<Train> res = Train_List.data_find(trainID);
+    vector<int> res = Train_List.data_find(trainID);
     if (res.empty()) {
         std::cout << "-1\n";
         return ;
     }//train not found
-    Train now_train = res[0];
+    Train now_train; Train_id.read(now_train, res[0]);
     if (get_all_days(Date) < get_all_days(now_train.saleDate_start) || get_all_days(Date) > get_all_days(now_train.saleDate_end)) {
         std::cout << "-1\n";
         return ;
@@ -415,9 +423,9 @@ void query_ticket(int operator_time) {
     // return ;
 
     vector<std::tuple<Journey, int, int> >ans;
-    vector<Journey>res = Place_to_Place_List.data_find(std::make_pair(start_station, end_station));
+    vector<int>res = Place_to_Place_List.data_find(std::make_pair(start_station, end_station));
     for (int i = 0; i < res.size(); i++) {
-        Journey now_Journey = res[i];
+        Journey now_Journey; Journey_id.read(now_Journey, res[i]);
         if (get_all_days(Date) < get_all_days(now_Journey.first_time.x) || get_all_days(Date) > get_all_days(now_Journey.last_time.x)) continue;
         ans.push_back(std::make_tuple(now_Journey, now_Journey.need_time, now_Journey.need_money));
     }
@@ -456,7 +464,7 @@ void query_ticket(int operator_time) {
     for (int i = 0; i < ans.size(); i++) {
         Journey now_Journey = std::get<0>(ans[id[i]]);
 
-        Train now_train = Train_List.data_find(now_Journey.trainID)[0];
+        Train now_train; Train_id.read(now_train, Train_List.data_find(now_Journey.trainID)[0]);
         int day_id = get_days(now_Journey.first_time.x, Date);
         Time start_time = Time(Date, now_Journey.first_time.y);
         Time end_time = start_time; end_time += now_Journey.need_time;
@@ -503,7 +511,7 @@ void query_transfer() {
     //first train, second train, total_time, total_cost, mid_station, first_train_time, first_train_arrive_time, second_train_time, second_train_arrive_time, first_train_day_id, second_train_day_id
     vector<chars>vec1 = Place_to_Train_List.data_find(start_station);
     for (int o = 0; o < vec1.size(); o++) {
-        Train first_train = Train_List.data_find(vec1[o])[0];
+        Train first_train; Train_id.read(first_train, Train_List.data_find(vec1[o])[0]);
 
         int pos_1 = -1;
         int pass_time_ = 0;
@@ -533,11 +541,11 @@ void query_transfer() {
 
             //code from query_ticket
             chars mid_station = first_train.stations[pos_1_to];
-            vector<Journey>res = Place_to_Place_List.data_find(std::make_pair(mid_station, end_station));
+            vector<int>res = Place_to_Place_List.data_find(std::make_pair(mid_station, end_station));
             for (int i = 0; i < res.size(); i++) {
-                Journey now_Journey = res[i];
+                Journey now_Journey; Journey_id.read(now_Journey, res[i]);
                 chars train_ID = now_Journey.trainID;
-                Train now_train = Train_List.data_find(train_ID)[0];
+                Train now_train; Train_id.read(now_train, Train_List.data_find(train_ID)[0]);
                 if (now_train.trainID == first_train.trainID) continue;
 
                 int loc = now_Journey.pos;

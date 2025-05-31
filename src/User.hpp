@@ -11,15 +11,16 @@
 
 class User {//store data about User
 public:
+    int id;
     chars username, password, name, mailAddr;
     int privilege;
 
 public:
     User() {
-        privilege = 0;
+        privilege = 0; id = 0;
         username = chars(); password = chars(); name = chars(); mailAddr = chars();
     }
-    User(const chars &username, const chars &password, const chars &name, const chars &mailAddr, const int &privilege) : username(username), password(password), name(name), mailAddr(mailAddr), privilege(privilege) {}
+    User(const chars &username, const chars &password, const chars &name, const chars &mailAddr, const int &privilege) : id(0), username(username), password(password), name(name), mailAddr(mailAddr), privilege(privilege) {}
     [[nodiscard]] int Privilege() const {return privilege;}
     [[nodiscard]] chars Username() const {return username;}
     [[nodiscard]] chars Password() const {return password;}
@@ -34,13 +35,15 @@ public:
     }
 };
 
-inline FileStore<chars, User> User_List;
+inline MemoryRiver<User, 1> User_id;
+inline FileStore<chars, int> User_List;
 inline FileStore<chars, bool> User_Login;
 inline MemoryRiver<chars, 1> User_root;
 inline chars root_username;
 inline bool exist_root;
 
 inline void User_Init() {
+    User_id.initialise("User_id");
     User_List.Init("User_List");
     User_Login.Init("User_Login");
     User_root.initialise("User_root");
@@ -61,6 +64,7 @@ inline void User_once_clean() {
 }
 
 inline void User_ALL_CLEAN() {
+    User_id.clear_all();
     User_Login.clear_all();
     User_List.clear_all();
     User_root.clear_all();
@@ -84,8 +88,9 @@ inline int add_user() {
 
     if (!exist_root) {
         privilege = 10;
-        const User root(username, password, name, mailAddr, privilege);
-        User_List.data_insert(username, root);
+        User root(username, password, name, mailAddr, privilege);
+        int root_id = User_id.write(root);
+        User_List.data_insert(username, root_id);
         // std::cerr << "qwq\n";
         root_username = username; exist_root = true;
         const int id = User_root.write(username) + 1;
@@ -95,14 +100,16 @@ inline int add_user() {
         return 0;
     }
 
-    vector<User>res = User_List.data_find(cur_username); if (res.empty()) return -1;//can't find cur_user
-    const int cur_user_privilege = res[0].Privilege();
+    vector<int>res = User_List.data_find(cur_username); if (res.empty()) return -1;//can't find cur_user
+    User cur_user; User_id.read(cur_user, res[0]);
+    const int cur_user_privilege = cur_user.Privilege();
     if (cur_user_privilege <= privilege) return -1;//privilege not ok
     if (!User_Login.data_find_bool(cur_username) || User_Login.data_find(cur_username)[0] == 0) return -1;//cur_user not login
     if (User_List.data_find_bool(username)) return -1;//new user already inside
 
-    const User now_user(username, password, name, mailAddr, privilege);
-    User_List.data_insert(username, now_user);
+    User now_user(username, password, name, mailAddr, privilege);
+    int now_user_id = User_id.write(now_user);
+    User_List.data_insert(username, now_user_id);
     User_Login.data_insert(username, false);//not login yet
     return 0;
 }
@@ -116,9 +123,10 @@ inline int login() {
         if (read_op == Chars("-p")) std::cin >> password.a;
     }
 
-    vector<User>res = User_List.data_find(username); if (res.empty()) return -1;//can't find user
+    vector<int>res = User_List.data_find(username); if (res.empty()) return -1;//can't find user
     if (User_Login.data_find_bool(username) && User_Login.data_find(username)[0]) return -1;//already login
-    const chars real_password = res[0].Password();
+    User cur_user; User_id.read(cur_user, res[0]);
+    const chars real_password = cur_user.Password();
     if (real_password != password) return -1;//password wrong
     User_Login.data_delete(username, false);
     User_Login.data_insert(username, true);
@@ -133,7 +141,7 @@ inline int logout() {
         if (read_op == Chars("-u")) std::cin >> username.a;
     }
 
-    vector<User>res = User_List.data_find(username); if (res.empty()) return -1;//can't find user
+    vector<int>res = User_List.data_find(username); if (res.empty()) return -1;//can't find user
     if (!User_Login.data_find_bool(username) || !User_Login.data_find(username)[0]) return -1;//not login
     User_Login.data_delete(username, true);
     User_Login.data_insert(username, false);
@@ -149,24 +157,25 @@ inline void query_profile(int operator_time) {
         if (read_op == Chars("-u")) std::cin >> username.a;
     }
 
-    vector<User>res = User_List.data_find(cur_username);
+    vector<int>res = User_List.data_find(cur_username);
     if (res.empty()) {
         std::cout << "-1\n"; return ;
     }//can't find cur_user
     if (!User_Login.data_find_bool(cur_username) || !User_Login.data_find(cur_username)[0]) {
         std::cout << "-1\n"; return ;
     }//cur_user not login
-    const int cur_privilege = res[0].Privilege();
+    User cur_user; User_id.read(cur_user, res[0]);
+    const int cur_privilege = cur_user.Privilege();
     res = User_List.data_find(username);
     if (res.empty()) {
         std::cout << "-1\n"; return ;
     }//can't find user
-    const int privilege = res[0].Privilege();
+    User user; User_id.read(user, res[0]);
+    const int privilege = user.Privilege();
     if (cur_privilege < privilege || (cur_privilege == privilege && cur_username != username)) {
         std::cout << "-1\n"; return ;
     }//cur_user privilege lower than user privilege
-    const User now = res[0];
-    std::cout << now.Username().a << " " << now.Name().a << " " << now.MailAddr().a << " " << now.Privilege() << std::endl;
+    std::cout << user.Username().a << " " << user.Name().a << " " << user.MailAddr().a << " " << user.Privilege() << std::endl;
 }
 
 inline void modify_profile() {
@@ -187,7 +196,7 @@ inline void modify_profile() {
         while (c != '\n' && c != '-') c = static_cast<char>(getchar());
     }
 
-    vector<User>res = User_List.data_find(cur_username);
+    vector<int>res = User_List.data_find(cur_username);
     if (res.empty()) {
         // std::cout << "can't find cur_user\n";
         std::cout << "-1\n"; return ;
@@ -196,13 +205,15 @@ inline void modify_profile() {
         // std::cout << "cur_user not login\n";
         std::cout << "-1\n"; return ;
     }//cur_user not login
-    int cur_privilege = res[0].Privilege();
+    User cur_user; User_id.read(cur_user, res[0]);
+    int cur_privilege = cur_user.Privilege();
     res = User_List.data_find(username);
     if (res.empty()) {
         // std::cout << "can't find user\n";
         std::cout << "-1\n"; return ;
     }//can't find user
-    int privilege = res[0].Privilege();
+    User user; User_id.read(user, res[0]);
+    int privilege = user.Privilege();
     if (cur_privilege < privilege || (cur_privilege == privilege && cur_username != username)) {
         // std::cout << "cur_user privilege lower than user privilege\n";
         std::cout << "-1\n"; return ;
@@ -213,23 +224,22 @@ inline void modify_profile() {
         std::cout << "-1\n"; return ;
     }//new_privilege >= cur_user privilege
 
-    User now = res[0];
-    User_List.data_delete(username, now);
     if (in[2]) {
-        now.password = new_password;
+        user.password = new_password;
     }
     if (in[3]) {
-        now.name = new_name;
+        user.name = new_name;
     }
     if (in[4]) {
-        now.mailAddr = new_mailAddr;
+        user.mailAddr = new_mailAddr;
     }
     if (in[5]) {
-        now.privilege = new_privilege;
+        user.privilege = new_privilege;
     }
-    User_List.data_insert(username, now);
+    // User_List.data_insert(username, now);
+    User_id.update(user, res[0]);
 
-    std::cout << now.Username().a << " " << now.Name().a << " " << now.MailAddr().a << " " << now.Privilege() << std::endl;
+    std::cout << user.Username().a << " " << user.Name().a << " " << user.MailAddr().a << " " << user.Privilege() << std::endl;
 }
 
 #endif //USER_HPP
