@@ -5,9 +5,10 @@
 #include<cstring>
 #include<iostream>
 
+template<int MAXIMUM_LEN = 60>
 struct chars {
     public:
-        char a[61];
+        char a[MAXIMUM_LEN + 1];
 
         chars(){a[0] = 0;}
 
@@ -48,22 +49,24 @@ struct chars {
         }
 };
 
-chars Chars(std::string x) {
+chars<> Chars(std::string x) {
     int len = x.length();
     chars res;
     for (int i = 0; i < len; i++) res[i] = x[i];
-    for (int i = len; i < 61; i++) res[i] = 0;
+    res[len] = 0;
+    // for (int i = len; i < 61; i++) res[i] = 0;
     return res;
 }
 
-std::string String(chars x) {
+std::string String(chars<> x) {
     int len = strlen(x.a);
     std::string res; res.resize(len);
     for (int i = 0; i < len; i++) res[i] = x.a[i];
     return res;
 }
 
-std::ostream& operator<<(std::ostream& out, const chars& now) {
+template<int MAXIMUM_LEN = 60>
+std::ostream& operator<<(std::ostream& out, const chars<MAXIMUM_LEN>& now) {
     out << now.a;
     return out;
 }

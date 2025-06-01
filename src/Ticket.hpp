@@ -10,8 +10,9 @@
 
 class Ticket {
     int operator_time;
-    chars username;
-    chars trainID, from_place, to_place;
+    chars<20> username;
+    chars<20> trainID;
+    chars<30> from_place, to_place;
     int number_of_train;
     Time leaving_time, arriving_time;
     int number, price;
@@ -20,7 +21,7 @@ public:
     int status;//0:pending 1:success -1:refunded
 
     Ticket(){}
-    Ticket(int operator_time, chars username, chars trainID, chars from_place, chars to_place, int number_of_train, Time leaving_time, Time arriving_time, int number, int price, int status) : operator_time(operator_time), username(username), trainID(trainID), from_place(from_place), to_place(to_place), number_of_train(number_of_train), leaving_time(leaving_time), arriving_time(arriving_time), number(number), price(price), status(status) {}
+    Ticket(int operator_time, chars<20> username, chars<20> trainID, chars<30> from_place, chars<30> to_place, int number_of_train, Time leaving_time, Time arriving_time, int number, int price, int status) : operator_time(operator_time), username(username), trainID(trainID), from_place(from_place), to_place(to_place), number_of_train(number_of_train), leaving_time(leaving_time), arriving_time(arriving_time), number(number), price(price), status(status) {}
 
     bool operator ==(const Ticket other) const {
         return (operator_time == other.operator_time) && (status == other.status);
@@ -56,11 +57,11 @@ public:
         std::cout << " " << price << " " << number;
     }
 
-    std::pair<chars, int> train_data_get() {
+    std::pair<chars<20>, int> train_data_get() {
         return std::make_pair(trainID, number_of_train);
     }
 
-    chars username_get() {
+    chars<20> username_get() {
         return username;
     }
 
@@ -118,8 +119,8 @@ public:
 };
 
 MemoryRiver<Ticket, 1> Ticket_id;
-FileStore<std::pair<chars, int>, int> Pending_Train_Ticket_List;//make_pair(trainID, number of train) -> Pending Ticket about this train
-FileStore<chars, int> User_Ticket_List;//userID -> this user's Ticket
+FileStore<std::pair<chars<20>, int>, int> Pending_Train_Ticket_List;//make_pair(trainID, number of train) -> Pending Ticket about this train
+FileStore<chars<20>, int> User_Ticket_List;//userID -> this user's Ticket
 
 void Ticket_Init() {
     Ticket_id.initialise("Ticket_id");
@@ -135,9 +136,9 @@ void Ticket_ALL_CLEAN() {
 }
 
 void buy_ticket(int operator_time) {
-    chars username, trainID; year_Time Date;
+    chars<20> username, trainID; year_Time Date;
     int number;
-    chars start_station, end_station;
+    chars<30> start_station, end_station;
     bool strategy = false;
 
     char c = getchar();
@@ -262,7 +263,7 @@ void buy_ticket(int operator_time) {
 }
 
 void query_order() {
-    chars username;
+    chars<20> username;
     chars read_op;
     for (int i = 1; i <= 1; i++) {
         std::cin >> read_op.a;
@@ -288,7 +289,7 @@ void query_order() {
 }
 
 int refund_ticket() {
-    chars username;
+    chars<20> username;
     int number = 1;
 
     char c = getchar();
@@ -329,7 +330,7 @@ int refund_ticket() {
         now_ticket.give_back_seat();
 
         //check the pending queue
-        std::pair<chars, int> train_data = now_ticket.train_data_get();
+        std::pair<chars<20>, int> train_data = now_ticket.train_data_get();
         vector<int>pending_queue = Pending_Train_Ticket_List.data_find(train_data);
         for (int i = 0; i < pending_queue.size(); i++) {//every pending ticket
             int pending_ticket_id = pending_queue[i];

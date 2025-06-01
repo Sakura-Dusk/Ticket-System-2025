@@ -12,20 +12,23 @@
 class User {//store data about User
 public:
     int id;
-    chars username, password, name, mailAddr;
+    chars<20> username;
+    chars<30> password;
+    chars<15> name;
+    chars<30> mailAddr;
     int privilege;
 
 public:
     User() {
         privilege = 0; id = 0;
-        username = chars(); password = chars(); name = chars(); mailAddr = chars();
+        username = chars<20>(); password = chars<30>(); name = chars<15>(); mailAddr = chars<30>();
     }
-    User(const chars &username, const chars &password, const chars &name, const chars &mailAddr, const int &privilege) : id(0), username(username), password(password), name(name), mailAddr(mailAddr), privilege(privilege) {}
+    User(const chars<20> &username, const chars<30> &password, const chars<15> &name, const chars<30> &mailAddr, const int &privilege) : id(0), username(username), password(password), name(name), mailAddr(mailAddr), privilege(privilege) {}
     [[nodiscard]] int Privilege() const {return privilege;}
-    [[nodiscard]] chars Username() const {return username;}
-    [[nodiscard]] chars Password() const {return password;}
-    [[nodiscard]] chars Name() const {return name;}
-    [[nodiscard]] chars MailAddr() const {return mailAddr;}
+    [[nodiscard]] chars<20> Username() const {return username;}
+    [[nodiscard]] chars<30> Password() const {return password;}
+    [[nodiscard]] chars<15> Name() const {return name;}
+    [[nodiscard]] chars<30> MailAddr() const {return mailAddr;}
 
     bool operator ==(const User& other) const {
         return username == other.username;
@@ -36,10 +39,10 @@ public:
 };
 
 inline MemoryRiver<User, 1> User_id;
-inline FileStore<chars, int> User_List;
-inline FileStore<chars, bool> User_Login;
-inline MemoryRiver<chars, 1> User_root;
-inline chars root_username;
+inline FileStore<chars<20>, int> User_List;
+inline FileStore<chars<20>, bool> User_Login;
+inline MemoryRiver<chars<20>, 1> User_root;
+inline chars<20> root_username;
 inline bool exist_root;
 
 inline void User_Init() {
@@ -50,7 +53,7 @@ inline void User_Init() {
     int op;
     User_root.get_info(op, 1);
     if (!op) {
-        root_username = chars();
+        root_username = chars<20>();
         exist_root = false;
     }
     else {
@@ -68,12 +71,15 @@ inline void User_ALL_CLEAN() {
     User_Login.clear_all();
     User_List.clear_all();
     User_root.clear_all();
-    root_username = chars(); exist_root = false;
+    root_username = chars<20>(); exist_root = false;
     User_Init();
 }
 
 inline int add_user() {
-    chars cur_username, username, password, name, mailAddr;
+    chars<20> cur_username, username;
+    chars<30> password;
+    chars<15> name;
+    chars<30> mailAddr;
     int privilege;
     chars read_op;
     for (int i = 1; i <= 6; i++) {
@@ -115,7 +121,8 @@ inline int add_user() {
 }
 
 inline int login() {
-    chars username, password;
+    chars<20> username;
+    chars<30> password;
     chars read_op;
     for (int i = 1; i <= 2; i++) {
         std::cin >> read_op.a;
@@ -134,7 +141,7 @@ inline int login() {
 }
 
 inline int logout() {
-    chars username;
+    chars<20> username;
     chars read_op;
     for (int i = 1; i <= 1; i++) {
         std::cin >> read_op.a;
@@ -149,7 +156,7 @@ inline int logout() {
 }
 
 inline void query_profile(int operator_time) {
-    chars cur_username, username;
+    chars<20> cur_username, username;
     chars read_op;
     for (int i = 1; i <= 2; i++) {
         std::cin >> read_op.a;
@@ -179,7 +186,10 @@ inline void query_profile(int operator_time) {
 }
 
 inline void modify_profile() {
-    chars cur_username, username, new_password, new_name, new_mailAddr;
+    chars<20> cur_username, username;
+    chars<30> new_password;
+    chars<15> new_name;
+    chars<30> new_mailAddr;
     int new_privilege;
     bool in[6] = {false};
     char c = static_cast<char>(getchar());

@@ -76,9 +76,9 @@ int get_times(Time x, Time y) {
 
 class Train {
 public:
-    chars trainID;
+    chars<20> trainID;
     int stationNum;
-    chars stations[stationNum_Maximum_Size];
+    chars<30> stations[stationNum_Maximum_Size];
     int seatNum;
     int prices[stationNum_Maximum_Size];
     day_Time startTime;
@@ -93,7 +93,7 @@ public:
     bool is_release;
 
     Train(){}
-    Train(chars trainID, int stationNum, chars* stations, int seatNum, int* prices, day_Time startTime, int* travelTimes, int* stopoverTimes, year_Time saleDate_start, year_Time saleDate_end, char type)
+    Train(chars<20> trainID, int stationNum, chars<30>* stations, int seatNum, int* prices, day_Time startTime, int* travelTimes, int* stopoverTimes, year_Time saleDate_start, year_Time saleDate_end, char type)
         : trainID(trainID), stationNum(stationNum), seatNum(seatNum), startTime(startTime), saleDate_start(saleDate_start), saleDate_end(saleDate_end), type(type), is_release(false) {
         for (int i = 0; i < stationNum; i++) this->stations[i] = stations[i];
         for (int i = 0; i < stationNum - 1; i++) this->prices[i] = prices[i];
@@ -110,7 +110,7 @@ public:
 };
 
 struct Journey {
-    chars trainID;
+    chars<20> trainID;
     int pos, pos_to;
     Time first_time, last_time;
     int need_time, need_money;
@@ -155,9 +155,9 @@ struct Journey {
 
 inline MemoryRiver<Train, 1> Train_id;
 inline MemoryRiver<Journey, 1> Journey_id;
-FileStore<chars, int> Train_List;
-FileStore<std::pair<chars, chars>, int> Place_to_Place_List;//pair<station,station> -> trainID
-FileStore<chars, chars> Place_to_Train_List;//station -> trainID
+FileStore<chars<20>, int> Train_List;
+FileStore<std::pair<chars<30>, chars<30> >, int> Place_to_Place_List;//pair<station,station> -> trainID
+FileStore<chars<30>, chars<20> > Place_to_Train_List;//station -> trainID
 
 void Train_Init() {
     Train_id.initialise("Train_id");
@@ -177,9 +177,9 @@ void Train_ALL_CLEAN() {
 }
 
 int add_train() {
-    chars trainID;
+    chars<20> trainID;
     int stationNum;
-    chars stations[stationNum_Maximum_Size];
+    chars<30> stations[stationNum_Maximum_Size];
     int seatNum;
     int prices[stationNum_Maximum_Size];
     day_Time startTime;
@@ -284,7 +284,7 @@ int add_train() {
 
 int delete_train() {
     // std::cerr << "Try delete_train\n";
-    chars trainID;
+    chars<20> trainID;
     chars read_op;
     for (int i = 1; i <= 1; i++) {
         std::cin >> read_op.a;
@@ -299,7 +299,7 @@ int delete_train() {
 }
 
 int release_train() {
-    chars trainID;
+    chars<20> trainID;
     chars read_op;
     for (int i = 1; i <= 1; i++) {
         std::cin >> read_op.a;
@@ -332,7 +332,7 @@ int release_train() {
 }
 
 void query_train() {
-    chars trainID;
+    chars<20> trainID;
     year_Time Date;
 
     chars read_op;
@@ -396,7 +396,7 @@ void query_train() {
 }
 
 void query_ticket(int operator_time) {
-    chars start_station, end_station;
+    chars<30> start_station, end_station;
     year_Time Date;
     bool strategy = 0;
     char c = getchar();
@@ -481,7 +481,7 @@ void query_ticket(int operator_time) {
 }
 
 void query_transfer(int operator_time) {
-    chars start_station, end_station;
+    chars<30> start_station, end_station;
     year_Time Date;
     bool strategy = 0;
     char c = getchar();
@@ -507,9 +507,9 @@ void query_transfer(int operator_time) {
     // return ;
 
     //first find all train that start from start_station
-    bool find_solution = 0; std::tuple<Train, Train, int, int, chars, Time, Time, Time, Time, int, int> ans;
+    bool find_solution = 0; std::tuple<Train, Train, int, int, chars<30>, Time, Time, Time, Time, int, int> ans;
     //first train, second train, total_time, total_cost, mid_station, first_train_time, first_train_arrive_time, second_train_time, second_train_arrive_time, first_train_day_id, second_train_day_id
-    vector<chars>vec1 = Place_to_Train_List.data_find(start_station);
+    vector<chars<20> >vec1 = Place_to_Train_List.data_find(start_station);
     for (int o = 0; o < vec1.size(); o++) {
         Train first_train; Train_id.read(first_train, Train_List.data_find(vec1[o])[0]);
 
@@ -566,7 +566,7 @@ void query_transfer(int operator_time) {
 
                 int total_money = first_train_money + need_money;
                 int total_time = get_times(first_train_time, second_train_arrive_time);
-                std::tuple<Train, Train, int, int, chars, Time, Time, Time, Time, int, int> maybe_ans(first_train, now_train, total_time, total_money, mid_station, first_train_time, first_train_arrrive_time, second_train_time, second_train_arrive_time, first_train_day_id, second_train_day_id);
+                std::tuple<Train, Train, int, int, chars<30>, Time, Time, Time, Time, int, int> maybe_ans(first_train, now_train, total_time, total_money, mid_station, first_train_time, first_train_arrrive_time, second_train_time, second_train_arrive_time, first_train_day_id, second_train_day_id);
 
                 if (find_solution) {
                     if (strategy == 0) {
