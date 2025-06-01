@@ -92,7 +92,7 @@ public:
         for (int i = pos + 1; i < now_train.stationNum; i++)
             if (now_train.stations[i] == to_place) {pos_to = i; break;}
 
-        for (int i = pos; i < pos_to; i++) maximum_ticket = std::min(maximum_ticket, now_train.ticket_left[number_of_train][i]);
+        for (int i = pos; i < pos_to; i++) maximum_ticket = std::min(maximum_ticket, now_train.ticket_left[number_of_train][i].to_int());
         return maximum_ticket;
     }
 
@@ -216,7 +216,7 @@ void buy_ticket(int operator_time) {
     int number_of_train = get_days(first_train_time.x, Date);
     int have_minimum_ticket = 1000000000, price = 0;
     for (int i = start_pos; i < end_pos; i++) {
-        have_minimum_ticket = std::min(have_minimum_ticket, now_train.ticket_left[number_of_train][i]);
+        have_minimum_ticket = std::min(have_minimum_ticket, now_train.ticket_left[number_of_train][i].to_int());
         price += now_train.prices[i];
     }
 

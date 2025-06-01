@@ -5,6 +5,7 @@
 #ifndef TRAIN_HPP
 #define TRAIN_HPP
 
+#include "Char3.hpp"
 #include "Chars.hpp"
 #include "Sort.hpp"
 
@@ -87,7 +88,7 @@ public:
     year_Time saleDate_start, saleDate_end;
     char type;
 
-    int ticket_left[Maximum_Day_Size][stationNum_Maximum_Size];
+    Char3 ticket_left[Maximum_Day_Size][stationNum_Maximum_Size];
 
 public:
     bool is_release;
@@ -322,7 +323,7 @@ int release_train() {
     int total_days = get_days(now_train.saleDate_start, now_train.saleDate_end) + 1;
     for (int i = 0; i < total_days; i++)
         for (int j = 0; j < now_train.stationNum; j++)
-            now_train.ticket_left[i][j] = now_train.seatNum;
+            now_train.ticket_left[i][j] = Char3(now_train.seatNum);
     //part about query_transfer : Place_to_Train_List
     for (int i = 0; i < now_train.stationNum; i++)
         Place_to_Train_List.data_insert(now_train.stations[i], trainID);
@@ -387,7 +388,7 @@ void query_train() {
             std::cout << "x\n";
         }
         else {
-            if (now_train.is_release) std::cout << now_train.ticket_left[day_number][i] << std::endl;
+            if (now_train.is_release) std::cout << now_train.ticket_left[day_number][i].to_int() << std::endl;
                 else std::cout << now_train.seatNum << std::endl;
             now_cost += now_train.prices[i];
             now_time += now_train.travelTimes[i];
@@ -470,7 +471,7 @@ void query_ticket(int operator_time) {
         Time end_time = start_time; end_time += now_Journey.need_time;
 
         int seat_number = 1000000000;
-        for (int j = now_Journey.pos; j < now_Journey.pos_to; j++) seat_number = std::min(seat_number, now_train.ticket_left[day_id][j]);
+        for (int j = now_Journey.pos; j < now_Journey.pos_to; j++) seat_number = std::min(seat_number, now_train.ticket_left[day_id][j].to_int());
 
         std::cout << now_train.trainID.a << " " << start_station.a << " ";
         start_time.write();
@@ -640,7 +641,7 @@ void query_transfer(int operator_time) {
         if (first_train.stations[i] == mid_station) break;
         else {
             first_train_need_money += first_train.prices[i];
-            first_train_seat_number = std::min(first_train_seat_number, first_train.ticket_left[first_train_day_id][i]);
+            first_train_seat_number = std::min(first_train_seat_number, first_train.ticket_left[first_train_day_id][i].to_int());
         }
     pos = -1;
     for (int i = 0; i < second_train.stationNum; i++) if (mid_station == second_train.stations[i]) {pos = i; break;}
@@ -648,7 +649,7 @@ void query_transfer(int operator_time) {
         if (second_train.stations[i] == end_station) break;
         else {
             second_train_need_money += second_train.prices[i];
-            second_train_seat_number = std::min(second_train_seat_number, second_train.ticket_left[second_train_day_id][i]);
+            second_train_seat_number = std::min(second_train_seat_number, second_train.ticket_left[second_train_day_id][i].to_int());
         }
 
     std::cout << first_train.trainID.a << " " << start_station.a << " ";
