@@ -39,6 +39,9 @@ void SKIP_HOLE_LINE() {
 }
 
 int main() {
+    // freopen("read.txt", "r", stdin);
+    // freopen("write.txt", "w", stdout);
+
     Init();
 
     while (true) {
@@ -127,6 +130,11 @@ int main() {
         if (operator_type == "exit") {
             std::cout << "bye\n";
             break;
+            // if (get_operator_time(operator_id) == 2084819) {
+            //     std::cout << "bye\n"; break;
+            // }
+            // once_clean();
+            // continue;
         }
     }
     once_clean();

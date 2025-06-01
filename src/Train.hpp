@@ -32,8 +32,8 @@ struct year_Time {
 };
 int get_all_days(year_Time x) {
     if (x.mm < 6) return -1000000000;
-    if (x.mm > 8) return 1000000000;
-    return x.dd + ((x.mm >= 7) ? 30 : 0) + ((x.mm >= 8) ? 31 : 0);
+    if (x.mm > 9) return 1000000000;
+    return x.dd + ((x.mm >= 7) ? 30 : 0) + ((x.mm >= 8) ? 31 : 0) + ((x.mm >= 9) ? 31 : 0);
 }
 year_Time days_to_year_Time(int x) {
     if (x <= 30) return year_Time(6, x);
@@ -548,9 +548,8 @@ void query_transfer(int operator_time) {
                 Train now_train; Train_id.read(now_train, Train_List.data_find(train_ID)[0]);
                 if (now_train.trainID == first_train.trainID) continue;
 
-                int loc = now_Journey.pos;
                 Time first_time = now_Journey.first_time, last_time = now_Journey.last_time;
-                if (Time_to_Minutes(first_train_arrrive_time) > Time_to_Minutes(last_time)) continue;
+                // if (Time_to_Minutes(first_train_arrrive_time) > Time_to_Minutes(last_time)) continue;
                 Time second_train_time(first_time.x, first_time.y);
                 if (get_all_minutes(first_time.y) >= get_all_minutes(first_train_arrrive_time.y)) {
                     if (get_all_days(first_train_arrrive_time.x) > get_all_days(second_train_time.x)) second_train_time.x = first_train_arrrive_time.x;
@@ -560,6 +559,7 @@ void query_transfer(int operator_time) {
                     if (get_all_days(first_train_arrrive_time.x) + 1 > get_all_days(second_train_time.x)) second_train_time.x = days_to_year_Time(get_all_days(first_train_arrrive_time.x) + 1);
                     // second_train_time.x = std::max(second_train_time.x, days_to_year_Time(get_all_days(first_train_arrrive_time.x) + 1));
                 }
+                if (Time_to_Minutes(second_train_time) > Time_to_Minutes(last_time)) continue;
                 int second_train_day_id = get_days(first_time.x, second_train_time.x);
                 int need_time = now_Journey.need_time, need_money = now_Journey.need_money;
                 Time second_train_arrive_time(second_train_time.x, second_train_time.y); second_train_arrive_time += need_time;
